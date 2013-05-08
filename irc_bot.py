@@ -198,6 +198,29 @@ def sendmail(to="nikisweeting+bot@gmail.com",subj='BOT: '+nick,msg="Test",attch=
    else:
       return "Sent email to %s. (subject: %s, attachments: %s)" % (to, subj, str(attch))
 
+
+def selfupdate(git_user="nikisweeting",git_repo="violent-python"):
+   log('[*] Starting Selfupdate...')
+   privmsg('[*] Starting Selfupdate...')
+   log('[>]   Downloading source code from git')
+   cmd = "rm -Rf code.zip code; curl https://codeload.github.com/%s/%s/zip/master > code.zip" % (git_user, git_repo)
+   for line in do(cmd):
+      log('[>]    ',line)
+      privmsg('[>]    %s' % line)
+   cmd = "unzip code.zip -d code"
+   for line in do(cmd):
+      log('[>]    ',line)
+      privmsg('[>]    %s' % line)
+   cmd = "sh code/*/update.sh"
+   for line in do(cmd):
+      log('[>]    ',line)
+      privmsg('[>]    %s' % line)
+      if line.find("STARTING") != -1:
+         broadcast("Shutting down for update.")
+         quit_status = True
+         irc.send ( 'QUIT\r\n' )
+         break
+
 def identify():
    log('[+] Running Identification Scripts...')
    import platform
@@ -333,8 +356,15 @@ if __name__ == '__main__':
             irc.send ( 'QUIT\r\n' )
             break
 
+         elif scan('!update'):
+            selfupdate()
+
+         elif privscan('update'):
+            selfupdate()
+
          elif scan('!identify'):
             broadcast(identify())
+
 
          elif privscan('identify'):
             priv_identify()

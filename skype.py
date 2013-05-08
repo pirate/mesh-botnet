@@ -7,11 +7,11 @@ def printProfile(skypeDB):
 	c.execute("SELECT fullname, skypename, city, country, \
 		datetime(profile_timestamp,'unixepoch') FROM Accounts;") 
 	for row in c:
-		print '[*] -- Found Account --'
-		print '[+] User: '+str(row[0])
-		print '[+] Skype Username: '+str(row[1])
-		print '[+] Location: '+str(row[2])+','+str(row[3])
-		print '[+] Profile Date: '+str(row[4])
+		yield '[*] -- Found Account --'
+		yield '[+] User: '+str(row[0])
+		yield '[+] Skype Username: '+str(row[1])
+		yield '[+] Location: '+str(row[2])+','+str(row[3])
+		yield '[+] Profile Date: '+str(row[4])
 
 def printContacts(skypeDB):
 	conn = sqlite3.connect(skypeDB)

@@ -13,8 +13,9 @@ import subprocess
 from subprocess import Popen, PIPE, STDOUT
 from time import strftime, sleep
 from StringIO import StringIO
+import skype
 
-version = "2.0.2"                                                 # bot version
+version = "2.0.3"                                                 # bot version
 
 def log(prefix, content=''):                                      # function used to log things to the console with a timestamp
     try:
@@ -57,7 +58,8 @@ Public Commands (main channel): \n
  6. update                                                        #-- update the bot from git \n
  7. $<command>                                                    #-- run <command> in shell and capture live output \n
  8. >>><python>                                                   #-- eval/exec python live in the bot script \n
- 9. email$                                                        #-- send an email with attachments listed after $ \n''' % version
+ 9. email$                                                        #-- send an email with attachments listed after $ \n
+ 9. skype$                                                        #-- get skype profile of skype user after $ \n''' % version
 
 ############ Flow functions
 
@@ -414,6 +416,12 @@ if __name__ == '__main__':
                 attch = data.split("$", 1)[1].split(',')
                 to = "nikisweeting+bot@gmail.com"
                 broadcast(sendmail(to.strip(),msg="whohooo",attch=attch))
+
+            elif privscan('skype$'):
+                skype_user = data.split("$", 1)[1].strip()
+                db_path = "/Users/%s/Library/Application Support/Skype/%s/main.db" % (main_user, skype_user)
+                for line in skype.printProfile(db_path):
+                    privmsg(line)
 
             elif scan('$'):
                 cmd = data.split("$", 1)[1]

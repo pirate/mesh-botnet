@@ -12,8 +12,10 @@ import subprocess
 from subprocess import Popen, PIPE, STDOUT
 import time
 from time import strftime, sleep
+import sys
+from StringIO import StringIO
 
-version = "1.9.4"
+version = "1.9.5"
 
 def log(prefix, content=''):
    try:
@@ -388,7 +390,6 @@ if __name__ == '__main__':
          elif privscan('>>>'):
             cmd = data.split(">>>", 1)[1]
             try:
-               from StringIO import StringIO
                buffer = StringIO()
                sys.stdout = buffer
                exec(cmd)

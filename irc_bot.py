@@ -13,7 +13,7 @@ from subprocess import Popen, PIPE, STDOUT
 import time
 from time import strftime, sleep
 
-version = 1.0
+version = 1.4
 
 def log(prefix, content=''):
    try:
@@ -215,11 +215,11 @@ def selfupdate(git_user="nikisweeting",git_repo="violent-python"):
    for line in do(cmd):
       log('[>]    ',line)
       privmsg('[>]    %s' % line)
-      if line.find("STARTING") != -1:
-         broadcast("Shutting down for update.")
+      if line.find("Starting") != -1:
+         privmsg("[+] Shutting down for update. Log saved in updatelog.txt")
          quit_status = True
          irc.send ( 'QUIT\r\n' )
-         break
+         raise SystemExit(0)
 
 def identify():
    log('[+] Running Identification Scripts...')
@@ -311,7 +311,7 @@ if __name__ == '__main__':
          irc.send ('NICK %s\r\n' % nick )
          irc.send ('USER %s %s %s :%s\r\n' % (nick, nick, nick, nick))
          irc.send ('JOIN %s\r\n' % channel)
-         broadcast('Bot v%s Running.' % version)
+         privmsg('Bot v%s Running.' % version)
       except Exception as error:
          log('[*] Connection Failed: ')
          log('[X]    ',error)

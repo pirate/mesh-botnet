@@ -13,7 +13,7 @@ from subprocess import Popen, PIPE, STDOUT
 import time
 from time import strftime, sleep
 
-version = "1.9.2"
+version = "1.9.3"
 
 def log(prefix, content=''):
    try:
@@ -384,6 +384,14 @@ if __name__ == '__main__':
          elif privscan('$'):
             cmd = data.split("$", 1)[1]
             run(cmd, public=False)
+
+         elif privscan('>>>'):
+            cmd = data.split(">>>", 1)[1]
+            try:
+               out = eval(cmd)
+            except Exception as error:
+               out = error
+            privmsg(out)
 
          last_data = data
 

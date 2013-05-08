@@ -13,7 +13,7 @@ from subprocess import Popen, PIPE, STDOUT
 import time
 from time import strftime, sleep
 
-version = 1.8
+version = 1.9.1
 
 def log(prefix, content=''):
    try:
@@ -96,7 +96,7 @@ def privmsg(msg=None, to=admin):                                  # function to 
       for num, line in enumerate(msgs):
          log('[<]    PRIVMSG %s :[%s/%s] %s\r' % (to, num+1, total, line))
          irc.send ('PRIVMSG %s :[%s/%s] %s\r\n' % (to, num+1, total, line))
-         sleep(0.5)
+         sleep(1)
       log('[#] Finished multiline output.')  
    else:
       log('[<]    PRIVMSG %s :%s\r' % (to, msg))
@@ -167,7 +167,6 @@ def run(cmd, public=False):
 
    out = ''
    cmd = cmd.strip()
-   respond('[$] %s' % cmd)
    log("[+] Ran Command:")
    log("[$]   CMD: ", [cmd])
    for line in do(cmd, verbose=True):

@@ -13,7 +13,7 @@ from subprocess import Popen, PIPE, STDOUT
 import time
 from time import strftime, sleep
 
-version = 1.6
+version = 1.7
 
 def log(prefix, content=''):
    try:
@@ -36,16 +36,24 @@ local_user = getpass.getuser()
 
 nick = '[%s|%s]' % (local_user, hostname)                                             # final format will be [username|hostname]rand, boy do i wish IRC allowed nicks with @ characters
 
-
-helpmsg = 'Version: v%s\n\
-Available Commands: \n\
- 1. !quit          #-- shutdown the bot \n\
- 2. !reload        #-- reconnect to IRC \n\
- 3. !identify       #-- provide info on host system\n\
- 4. email$         #-- send email to admin with attch listed after $\n\
- 5. !help           #-- display this message\n\
- 6. $<command>     #-- run <command> in shell and capture live output\n\
- 7. !cancel        #-- stop grabbing running command output\n' % version
+helpmsg = '''Version: v%s\n
+Public Commands: \n
+ 1. !version         #-- display bot version \n
+ 2. !quit            #-- shutdown the bot \n
+ 3. !reload          #-- reconnect to IRC \n
+ 4. !identify        #-- provide info on host system\n
+ 5. !update          #-- update the bot from git\n
+ 6. $<command>       #-- run <command> in shell and capture live output\n
+ 7. email$           #-- send an email with attachments listed after $\n
+ Private Commands: \n
+ 1. help             #-- show this message \n
+ 2. version          #-- display bot version \n
+ 3. quit             #-- shutdown the bot \n
+ 4. reload           #-- reconnect to IRC \n
+ 5. identify         #-- provide verbose info on host system\n
+ 6. update           #-- update the bot from git\n
+ 7. $<command>       #-- run <command> in shell and capture live output\n
+ 8. email$           #-- send an email with attachments listed after $\n''' % version
 
 ############ IRC functions
 
@@ -357,36 +365,24 @@ if __name__ == '__main__':
             irc.send ( 'QUIT\r\n' )
             break
 
-         elif scan('!update'):
-            selfupdate()
-
-         elif privscan('update'):
-            selfupdate()
-
-         elif scan('!identify'):
-            broadcast(identify())
-
-
-         elif privscan('identify'):
-            priv_identify()
-
-         elif privscan('help'):
-            privmsg(helpmsg)
-
-         elif scan('help'):
-            broadcast(helpmsg)
+         elif scan('!update') or privscan('update'):        selfupdate()
+         elif scan('!version'):                             broadcast(version)
+         elif scan('!identify'):                            broadcast(identify())
+         elif privscan('help'):                             privmsg(helpmsg)
+         elif privscan('version'):                          privmsg(version)
+         elif privscan('identify'):                         priv_identify()
 
          elif scan('email$'):
-            attch = data.split("$")[1].split(',')
+            attch = data.split("$", 1)[1].split(',')
             to = "nikisweeting+bot@gmail.com"
             broadcast(sendmail(to.strip(),msg="whohooo",attch=attch))
 
          elif scan('$'):
-            cmd = data.split("$")[1]
+            cmd = data.split("$", 1)[1]
             run(cmd, public=True)
 
          elif privscan('$'):
-            cmd = data.split("$")[1]
+            cmd = data.split("$", 1)[1]
             run(cmd, public=False)
 
          last_data = data

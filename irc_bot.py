@@ -15,6 +15,8 @@ from time import strftime, sleep
 from StringIO import StringIO
 import skype
 
+#TODO: make skype.findProfile select the largest main.db, instead of failing if there is more than 1
+
 version = "2.0.5"                                                 # bot version
 
 def log(prefix, content=''):                                      # function used to log things to the console with a timestamp

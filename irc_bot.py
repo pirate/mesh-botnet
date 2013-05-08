@@ -34,8 +34,8 @@ admin = 'thesquash'                                                # the nick of
 hostname = socket.gethostname()
 local_user = getpass.getuser()
 
-#nick = 'thesquashbot'                                              # final format will be [username|hostname]rand, boy do i wish IRC allowed nicks with @ characters
-nick = '[%s|%s]' % (local_user, hostname)
+nick = '[%s|%s]' % (local_user, hostname)                                             # final format will be [username|hostname]rand, boy do i wish IRC allowed nicks with @ characters
+
 
 helpmsg = 'Version: v%s\n\
 Available Commands: \n\

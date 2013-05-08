@@ -105,7 +105,7 @@ def privmsg(msg=None, to=admin):                                  # function to 
 def broadcast(msg):                                               # function to send a message to the main channel
    privmsg(msg, channel)
 
-def do(cmd, timeout=600, verbose=False):
+def do(cmd, timeout=60, verbose=False):
    out = ''
    signal.signal(signal.SIGALRM, handler)
    signal.alarm(timeout)

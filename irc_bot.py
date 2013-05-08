@@ -13,7 +13,7 @@ from subprocess import Popen, PIPE, STDOUT
 import time
 from time import strftime, sleep
 
-version = 1.9.1
+version = "1.9.2"
 
 def log(prefix, content=''):
    try:

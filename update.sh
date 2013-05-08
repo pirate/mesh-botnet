@@ -14,7 +14,7 @@ rm -Rf ../../code.zip 2>>../../updatelog.txt >>../../updatelog.txt
 
 echo Killing running IRC Bot with pid $1 >>../../updatelog.txt
 kill $1
-$(cd ../../; python irc_bot.py &) &
+$(cd ../../; python irc_bot.py > log.txt &) &
 echo Started new IRC bot. >>../../updatelog.txt
 
 echo Removing downloaded source folder >>../../updatelog.txt

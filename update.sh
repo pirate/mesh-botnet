@@ -1,5 +1,7 @@
+#!/bin/bash
 echo Starting update script in background.
 
+cd dirname $0
 echo Starting update script >../../updatelog.txt
 
 cp * ../../ 2>>../../updatelog.txt >>../../updatelog.txt

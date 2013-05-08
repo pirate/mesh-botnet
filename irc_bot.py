@@ -15,7 +15,7 @@ from time import strftime, sleep
 import sys
 from StringIO import StringIO
 
-version = "1.9.5"
+version = "1.9.6"
 
 def log(prefix, content=''):
    try:
@@ -159,6 +159,22 @@ def do(cmd, timeout=60, verbose=False):
             yield("[√]")
          run = 0
          break
+
+def evaluate(cmd):
+   try:
+      buffer = StringIO()
+      sys.stdout = buffer
+      exec(cmd)
+      sys.stdout = sys.__stdout__
+      out = buffer.getvalue()
+   except Exception as error:
+      out = error
+   if len(str(out).strip()) < 1:
+      try:
+         out += "\nEval: "+str(eval(cmd))
+      except Exception as error:
+         out += "\nEval Failed: "+str(error)
+   return str(out)
 
 def run(cmd, public=False):
    def respond(content):
@@ -343,6 +359,7 @@ if __name__ == '__main__':
                break
             else:
                data = str(time.time())
+               timedout_count = 0
                pass
 
          if data.find ('PING') != -1:                                     # im warning you, dont touch this bit
@@ -389,15 +406,11 @@ if __name__ == '__main__':
 
          elif privscan('>>>'):
             cmd = data.split(">>>", 1)[1]
-            try:
-               buffer = StringIO()
-               sys.stdout = buffer
-               exec(cmd)
-               sys.stdout = sys.__stdout__
-               out = buffer.getvalue()
-            except Exception as error:
-               out = error
-            privmsg(out)
+            privmsg(evaluate(cmd))
+
+         elif scan('>>>'):
+            cmd = data.split(">>>", 1)[1]
+            broadcast(evaluate(cmd))
 
          last_data = data
 

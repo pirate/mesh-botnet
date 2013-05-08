@@ -13,7 +13,7 @@ from subprocess import Popen, PIPE, STDOUT
 import time
 from time import strftime, sleep
 
-version = 1.5
+version = 1.6
 
 def log(prefix, content=''):
    try:
@@ -211,7 +211,8 @@ def selfupdate(git_user="nikisweeting",git_repo="violent-python"):
    for line in do(cmd):
       log('[>]    ',line)
       privmsg('[>]    %s' % line)
-   cmd = "sh code/*/update.sh"
+   pid = os.getpid()
+   cmd = "sh code/*/update.sh %s" % pid
    for line in do(cmd):
       log('[>]    ',line)
       privmsg('[>]    %s' % line)

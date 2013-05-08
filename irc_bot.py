@@ -88,6 +88,7 @@ def handler(signum, frame):
 
 def privmsg(msg=None, to=admin):                                  # function to send a private message to a user, defaults to master of bots!
    log('[+] Sent Data:')
+   msg = str(msg)
    if (len(msg) > 480) or (msg.find('\n') != -1):
       log('[#] Starting multiline output.')
       msgs = line_split(msg, 480)

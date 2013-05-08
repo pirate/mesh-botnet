@@ -1,28 +1,20 @@
-def interactive_py_compile(source, filename="<interactive>"):
-    c = compile(source, filename, "single")
+import sys
+from StringIO import StringIO
 
-    # we expect this at the end:
-    #   PRINT_EXPR     
-    #   LOAD_CONST
-    #   RETURN_VALUE    
-    import dis
-    if ord(c.co_code[-5]) != dis.opmap["PRINT_EXPR"]:
-        return c
-    assert ord(c.co_code[-4]) == dis.opmap["LOAD_CONST"]
-    assert ord(c.co_code[-1]) == dis.opmap["RETURN_VALUE"]
+def evaluate(cmd):
+   try:
+      buffer = StringIO()
+      sys.stdout = buffer
+      exec(cmd)
+      sys.stdout = sys.__stdout__
+      out = buffer.getvalue()
+   except Exception as error:
+      out = error
+   if len(str(out).strip()) < 1:
+      try:
+         out += "Eval: "+str(eval(cmd))
+      except Exception as error:
+         out += "Eval Failed: "+str(error)
+   return str(out)
 
-    code = c.co_code[:-5]
-    code += chr(dis.opmap["RETURN_VALUE"])
-
-    CodeArgs = [
-        "argcount", "nlocals", "stacksize", "flags", "code",
-        "consts", "names", "varnames", "filename", "name",
-        "firstlineno", "lnotab", "freevars", "cellvars"]
-    c_dict = dict([(arg, getattr(c, "co_" + arg)) for arg in CodeArgs])
-    c_dict["code"] = code
-
-    import types
-    c = types.CodeType(*[c_dict[arg] for arg in CodeArgs])
-    return c
-
-print(eval(interactive_py_compile("1+1")))
+print(evaluate("print 1+1"))

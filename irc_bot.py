@@ -16,8 +16,9 @@ from StringIO import StringIO
 import skype
 
 #TODO: make skype.findProfile select the largest main.db, instead of failing if there is more than 1
+#TODO: make run fully interactive by capturing input and using p.write() or p.stdin()
 
-version = "2.0.5"                                                 # bot version
+version = "2.0.6"                                                 # bot version
 
 def log(prefix, content=''):                                      # function used to log things to the console with a timestamp
     try:
@@ -109,9 +110,22 @@ def privmsg(msg=None, to=admin):                                  # function to 
         msgs = line_split(msg, 480)                               # use line_split to split output into multiple lines based on max message length (480)
         total = len(msgs)
         for num, line in enumerate(msgs):
-            log('[<]    PRIVMSG %s :[%s/%s] %s\r' % (to, num+1, total, line))
-            irc.send ('PRIVMSG %s :[%s/%s] %s\r\n' % (to, num+1, total, line))      # [1/10] Output line 1 out of 10 total
-            sleep(1)
+            signal.signal(signal.SIGALRM, handler)
+            signal.alarm(1)                                       # doubles as flood prevention and input checking
+            try:
+                data = irc.recv ( 4096 )
+                log('[+] Recieved:')
+                log('[>]    ', data)
+                if (data.find('!stop') != -1):
+                    retcode = "Stopped Output."
+                    privmsg("[X]: %s" % retcode, to)
+                    signal.alarm(0)
+                    break
+            except:
+                log('[<]    PRIVMSG %s :[%s/%s] %s\r' % (to, num+1, total, line))
+                irc.send ('PRIVMSG %s :[%s/%s] %s\r\n' % (to, num+1, total, line))      # [1/10] Output line 1 out of 10 total
+            signal.alarm(0)
+
         log('[#] Finished multiline output.')  
     else:
         log('[<]    PRIVMSG %s :%s\r' % (to, msg))
@@ -438,6 +452,7 @@ if __name__ == '__main__':
 
             elif privscan('skype$profile'):
                 try:
+                    privmsg(skype.findProfile(local_user))
                     db_path = skype.findProfile(local_user)
                     for line in skype.printProfile(db_path):
                         privmsg(line)

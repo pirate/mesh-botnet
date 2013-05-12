@@ -15,7 +15,7 @@ nano readme.md
 ## How to write Python
   
 **How to edit:**  
-* Listen to badass motherfucking music  
+* Listen to badass music  
 * Pick a good editor like Sublime Text 3 (http://appdl.net/sublime-text-3-build-3021/)  
 * Save regularly  
 * Check to make sure your code works, by running it in terminal with `$ python filename.py`   

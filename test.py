@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-
-
 def addition(in1):
 	return str(int(in1.split("+")[0])+int(in1.split("+")[1]))
 

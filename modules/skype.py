@@ -1,5 +1,6 @@
 import sqlite3
 import os
+
 def printProfile(skypeDB):
 	conn = sqlite3.connect(skypeDB)
 	c = conn.cursor()

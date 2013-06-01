@@ -371,6 +371,7 @@ if __name__ == '__main__':
                     if (time.time() - last_ping) > threshold:        # if reciving data times out and ping threshold is exceeded, attempt a reconnect
                         log('[*] Disconnected.')
                         timedout_count = 50
+                        quit_status = False
                         break
                     else:
                         data = str(time.time())
@@ -549,6 +550,6 @@ if __name__ == '__main__':
         except RuntimeError as exit_exception:
             log("[#] ----EXCEPTION---- ",exit_exception)
             
-        log("[*] EXIT")
-        raise SystemExit
-        sys.exit()
+    log("[*] EXIT")
+    raise SystemExit
+    sys.exit()

@@ -1,5 +1,5 @@
 **Nick Sweeting 2013 -- MIT License**  
-Violent Python: Nefarious python targeted towards Mac OS X
+Python toolkits geared towards Mac OS X
 ========
 
 ## Install:
@@ -20,7 +20,7 @@ nano readme.md
 * Save regularly  
 * Check to make sure your code works, by running it in terminal with `$ python filename.py`   
 * There is awesome documentation on python all over the web: [http://www.python.org/doc/](http://www.python.org/doc/)  
-* Book on hacking using python that this project is based off [http://books.google.com/books/about/Violent_Python.html?id=2XliiK7FKoEC](http://books.google.com/books/about/Violent_Python.html?id=2XliiK7FKoEC), ask me for a copy
+* The book that spawned this idea "Violent Python" [http://books.google.com/books/about/Violent_Python.html?id=2XliiK7FKoEC](http://books.google.com/books/about/Violent_Python.html?id=2XliiK7FKoEC), ask me for a copy
 
 ## How to use Github
 

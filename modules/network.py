@@ -54,8 +54,8 @@ if __name__=="__main__":
     import time
 
     print "Starting Race"
-    multiportscan(host='127.0.0.1',max_port=100000)
     portscan(host='127.0.0.1',max_port=100000)
+    multiportscan(host='127.0.0.1',max_port=100000)
 
 
         # except socket.gaierror:

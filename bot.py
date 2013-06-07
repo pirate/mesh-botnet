@@ -12,7 +12,7 @@ import signal
 import time
 import os
 import sys
-import subprocess
+#import subprocess
 import urllib2
 import unicodedata
 import json
@@ -31,14 +31,14 @@ from StringIO import StringIO
 
 version = "4.0"                                                   # bot version
 
-### Remove/comment this block to disable logging stdout/err to a file
-so = se = open("bot_v%s.log" % version, 'w', 0)
-# re-open stdout without buffering
-sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
-# redirect stdout and stderr to the log file
-os.dup2(so.fileno(), sys.stdout.fileno())
-os.dup2(se.fileno(), sys.stderr.fileno())
-### Endblock
+#### Remove/comment this block to disable logging stdout/err to a file
+#so = se = open("bot_v%s.log" % version, 'w', 0)
+## re-open stdout without buffering
+#sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+## redirect stdout and stderr to the log file
+#os.dup2(so.fileno(), sys.stdout.fileno())
+#os.dup2(se.fileno(), sys.stderr.fileno())
+#### Endblock
 
 def log(prefix, content=''):                                      # function used to log things to stdout with a timestamp
     try:
@@ -195,11 +195,7 @@ def broadcast(msg):                                               # function to 
 
 ############ Keyword functions
 
-from modules.skype import *
-from modules.geo import *
-from modules.network import *
-from modules.identification import *
-from modules.communication import *
+load_modules()
 
 def run_shell(cmd, timeout=60, verbose=False):                    # run a shell command and return the output, verbose enables live command output via yield
     signal.signal(signal.SIGALRM, timeout_handler)
@@ -551,5 +547,5 @@ if __name__ == '__main__':
             log("[#] ----EXCEPTION---- ",exit_exception)
             
     log("[*] EXIT")
-    raise SystemExit
+    raise SystemExit(0)
     sys.exit()

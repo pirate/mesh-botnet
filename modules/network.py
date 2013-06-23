@@ -2,7 +2,7 @@
  
 import time, socket
 
-def portscan(host, max_port=10000):
+def portscan(host, max_port=1000):
     yield 'Starting Singlethreaded Portscan of %s.' % host
     benchmark = time.time()
     try:

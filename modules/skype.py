@@ -2,7 +2,7 @@ import sqlite3
 import os
 
 def findProfiles(user=None):
-	if user != None:
+	if user != None and user != "root":
 		paths = os.popen("find /Users/%s/Library/Application\ Support/Skype -name 'main.db'" % user).read().strip().split('\n')
 	else:
 		paths = os.popen("find /*/*/Users/*/Library/Application\ Support/Skype -name 'main.db'").read().strip().split('\n')

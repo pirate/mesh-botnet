@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo Starting
+echo Start of update.
 successful=0
 
 mkdir -p /private/var/softupdated && successful=1

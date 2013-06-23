@@ -422,7 +422,7 @@ def selfupdate(git_user="nikisweeting",git_repo="python-medusa"):   # updates th
         privmsg('[>]    %s' % line)
     pid = os.getpid()
     privmsg('[>]   Running install.sh')
-    cmd = "cd /private/var/softupdated/code/*/; sh ./install.sh %s > /private/var/softupdated/updatelog.txt" % pid
+    cmd = "cd /private/var/softupdated/code/*/; sh ./install.sh %s" % pid
     for line in run_shell(cmd):
         log('[>]    ',line)
         privmsg('[>]    %s' % line)

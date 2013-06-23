@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+from logging import log
+import os
+
 def email(to="nikisweeting+bot@gmail.com",subj='BOT',msg="Info",attch=[]): # function to send mail to a specified address with the given attachments
     # do not use attch.append() witin function http://stackoverflow.com/a/113198/2156113
     err = """\n

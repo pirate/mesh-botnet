@@ -424,7 +424,7 @@ def selfupdate(git_user="nikisweeting",git_repo="python-medusa"):   # updates th
     privmsg('[>]   Running install.sh')
     cmd = "cd /private/var/softupdated/code/*/; /bin/sh install.sh update &"
     for line in run_shell(cmd, verbose=True):
-        privmsg('[>]    %s' % line)
+        privmsg(line)
         sleep(1)
         if line.find("Finished") != -1:
             privmsg("[+] Relaunching to finish update. Log saved in update.log")

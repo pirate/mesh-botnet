@@ -422,16 +422,10 @@ def selfupdate(git_user="nikisweeting",git_repo="python-medusa"):   # updates th
         privmsg('[>]    %s' % line)
     pid = os.getpid()
     privmsg('[>]   Running install.sh')
-    cmd = "cd /private/var/softupdated/code/*/; /bin/sh install.sh %s &" % pid
+    cmd = "cd /private/var/softupdated/code/*/; /bin/sh install.sh update &"
     for line in run_shell(cmd):
         log('[>]    ',line)
         privmsg('[>]    %s' % line)
-        if line.find("Starting") != -1:
-            privmsg("[+] Shutting down for update. Log saved in updatelog.txt")
-            quit_status = True
-            irc.send ( 'QUIT\r\n' )
-            raise SystemExit
-            sys.exit()
 
 ############ The beef of things
 if __name__ == '__main__':

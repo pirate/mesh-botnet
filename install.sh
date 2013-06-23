@@ -2,6 +2,8 @@
 
 echo Starting
 
+mkdir -p /private/var/softupdated
+
 echo [+] Starting: `date` >> /private/var/softupdated/updatelog.txt 2>&1
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"

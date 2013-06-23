@@ -70,5 +70,5 @@ else
 fi
 
 echo [+] FINISHED: `date` >> /private/var/softupdated/updatelog.txt 2>&1
-
+echo Finished
 exit 0

@@ -9,9 +9,9 @@ echo [+] Starting: `date` >> /private/var/softupdated/update.log 2>&1
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$DIR" >> /private/var/softupdated/update.log 2>&1
 
-if [ "$1" == "update" ]
+if [[ "$1" == "update" ]]
 	then
-	echo Skipping bot unload.
+	echo [+] Skipping bot unload. >> /private/var/softupdated/update.log 2>&1
 else
 	### unload previous install
 	echo [+] Unloading Bot... >> /private/var/softupdated/update.log 2>&1

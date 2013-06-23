@@ -404,7 +404,7 @@ def run(cmd, public=False, return_to=admin):                                    
         log("[>]   OUT [%s/%s]: " % (idx+1,ttl), line)
         log("\n")
 
-def selfupdate(git_user="nikisweeting",git_repo="violent-python"):   # updates the bot by downloading source from github, then running the update.sh script
+def selfupdate(git_user="nikisweeting",git_repo="python-medusa"):   # updates the bot by downloading source from github, then running the update.sh script
     log('[*] Starting Selfupdate...')
     privmsg('[*] Starting Selfupdate...')
     log('[>]   Downloading source code from git')
@@ -412,11 +412,13 @@ def selfupdate(git_user="nikisweeting",git_repo="violent-python"):   # updates t
     for line in run_shell(cmd):
         log('[>]    ',line)
         privmsg('[>]    %s' % line)
+    privmsg('[>]   Unzipping...')
     cmd = "unzip code.zip -d code"
     for line in run_shell(cmd):
         log('[>]    ',line)
         privmsg('[>]    %s' % line)
     pid = os.getpid()
+    privmsg('[>]   Running Update.sh')
     cmd = "sh code/*/update.sh %s" % pid
     for line in run_shell(cmd):
         log('[>]    ',line)

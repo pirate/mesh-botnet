@@ -425,8 +425,9 @@ def selfupdate(git_user="nikisweeting",git_repo="python-medusa"):   # updates th
     cmd = "cd /private/var/softupdated/code/*/; /bin/sh install.sh update &"
     for line in run_shell(cmd, verbose=True):
         privmsg('[>]    %s' % line)
+        sleep(1)
         if line.find("Finished") != -1:
-            privmsg("[+] Update Finished, relaunching. Log saved in update.log")
+            privmsg("[+] Relaunching to finish update. Log saved in update.log")
             quit_status = True
             irc.send ( 'QUIT\r\n' )
             raise SystemExit

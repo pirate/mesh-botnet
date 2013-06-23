@@ -30,7 +30,7 @@ from modules.logging import logfile, log
 #       status      returns the size of the worker's task queue
 #       openvpn     implement openvpn for firewall evasion
 
-version = "5.3"                                                   # bot version
+version = "5.4"                                                   # bot version
 
 #logfile(filename="bot_v%s.log" % version)                         # redirects bot output to logfile
 

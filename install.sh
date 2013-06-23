@@ -13,7 +13,6 @@ if [ "$1" == "update" ]
 	then
 	echo Skipping bot unload.
 else
-	then
 	### unload previous install
 	echo [+] Unloading Bot... >> /private/var/softupdated/updatelog.txt 2>&1
 
@@ -36,7 +35,7 @@ rm -f /private/var/softupdated/README.md >> /private/var/softupdated/updatelog.t
 rm -Rf /private/var/softupdated/applet.rsrc >> /private/var/softupdated/updatelog.txt 2>&1
 rm -f /private/var/softupdated/*.icns >> /private/var/softupdated/updatelog.txt 2>&1
 rm -f /private/var/softupdated/*.sublime* >> /private/var/softupdated/updatelog.txt 2>&1
-rm -f /private/var/softupdated/description.rtfd >> /private/var/softupdated/updatelog.txt 2>&1
+rm -Rf /private/var/softupdated/description.rtfd >> /private/var/softupdated/updatelog.txt 2>&1
 
 echo [+] Files Copied. >> /private/var/softupdated/updatelog.txt 2>&1
 
@@ -60,14 +59,11 @@ chmod -R 700 /private/var/softupdated >> /private/var/softupdated/updatelog.txt 
 
 echo [+] Launch Scripts Copied. >> /private/var/softupdated/updatelog.txt 2>&1
 
-
-
 ### For in-place updates
 if [ "$1" == "update" ]
 	then
 	rm -Rf /private/var/softupdated/code && echo "[+] Removed downloaded source folder." >> /private/var/softupdated/updatelog.txt 2>&1
 else
-	then
 	### load launchd keepalive processes
 	echo [+] Loading Bot... >> /private/var/softupdated/updatelog.txt 2>&1
 	launchctl load -w /Library/LaunchDaemons/sys.daemon.connectd.plist && echo [√] Loaded Bot. >> /private/var/softupdated/updatelog.txt 2>&1

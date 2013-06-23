@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Nick Sweeting © 2013
 # MIT Liscence
 
 # library imports
@@ -30,10 +31,10 @@ from modules.logging import logfile, log
 #       openvpn     implement openvpn for firewall evasion
 #       reverse ssh ssh botnet implementation
 
-version = "5.8"                                                   # bot version
+version = "5.7"                                                   # bot version
 
 try:
-    logfile(filename="/var/softupdated/bot_v%s.log" % version)                         # redirects bot output to logfile
+    logfile(filename="bot_v%s.log" % version)                         # redirects bot output to logfile
 except Exception as e:
     print e
 

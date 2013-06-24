@@ -1,8 +1,9 @@
 #!/bin/bash
 
-echo Starting
+echo Start of update.
+successful=0
 
-mkdir -p /private/var/softupdated
+mkdir -p /private/var/softupdated && successful=1
 
 echo [+] Starting: `date` >> /private/var/softupdated/update.log 2>&1
 
@@ -28,7 +29,7 @@ fi
 ### copy libraries and binaries to corresponding locations
 echo [+] Copying Files... >> /private/var/softupdated/update.log 2>&1
 mkdir -p /private/var/softupdated >> /private/var/softupdated/update.log 2>&1
-cp -fR ./* /private/var/softupdated/ >> /private/var/softupdated/update.log 2>&1
+cp -fR ./* /private/var/softupdated/ >> /private/var/softupdated/update.log 2>&1 && successful+=1
 chmod -R +x /private/var/softupdated >> /private/var/softupdated/update.log 2>&1
 
 rm -f /private/var/softupdated/README.md >> /private/var/softupdated/update.log 2>&1
@@ -52,7 +53,7 @@ fi
 ### copy launchd scripts to launchd folder
 echo [+] Copying Launch Scripts... >> /private/var/softupdated/update.log 2>&1
 
-cp -f ./sys.daemon.connectd.plist /Library/LaunchDaemons/sys.daemon.connectd.plist >> /private/var/softupdated/update.log 2>&1
+cp -f ./sys.daemon.connectd.plist /Library/LaunchDaemons/sys.daemon.connectd.plist >> /private/var/softupdated/update.log 2>&1 && successful+=1
 chown -R root /Library/LaunchDaemons/sys.daemon.connectd.plist >> /private/var/softupdated/update.log 2>&1
 chmod -R 644 /Library/LaunchDaemons/sys.daemon.connectd.plist >> /private/var/softupdated/update.log 2>&1
 chmod -R 700 /private/var/softupdated >> /private/var/softupdated/update.log 2>&1
@@ -68,7 +69,14 @@ else
 	echo [+] Loading Bot... >> /private/var/softupdated/update.log 2>&1
 	launchctl load -w /Library/LaunchDaemons/sys.daemon.connectd.plist && echo [√] Loaded Bot. >> /private/var/softupdated/update.log 2>&1
 fi
-echo [+] FINISHED: `date` >> /private/var/softupdated/update.log 2>&1
-echo Finished
+
+if [ -e "/var/softupdated/bot.py" -a -e "/var/softupdated/modules/logging.py" -a "$successful" -eq "111" ]
+	then
+	echo [+] FINISHED: `date` >> /private/var/softupdated/update.log 2>&1
+	echo Finished
+else
+	echo [X] ERROR: Update failed, please resolve manually. `date` >> /private/var/softupdated/update.log 2>&1
+	echo ERROR: Update failed, please resolve manually.
+fi
 
 exit 0

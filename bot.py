@@ -431,8 +431,6 @@ def selfupdate(git_user="nikisweeting",git_repo="python-medusa"):   # updates th
             irc.send ( 'QUIT\r\n' )
             raise SystemExit
             sys.exit()
-        else:
-            sleep(1)
 
 ############ The beef of things
 if __name__ == '__main__':

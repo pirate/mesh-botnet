@@ -22,9 +22,9 @@ nano readme.md
 * There is awesome documentation on python all over the web: [http://www.python.org/doc/](http://www.python.org/doc/)  
 * The book that spawned this idea "Violent Python" [http://books.google.com/books/about/Violent_Python.html?id=2XliiK7FKoEC](http://books.google.com/books/about/Violent_Python.html?id=2XliiK7FKoEC), ask me for a copy
 
-## How to use Github
+## How to use Git
 
-Github is a program that lets you track the changes you make to code, then share those changes you make with others.  A collection of code in one folder is called a "repository" (repo for short).  Groups of changes are put together to make a "commit".  You can view a history of all the commits made using `git log`.
+Git is a program that lets you track the changes you make to code, then share those changes you make with others.  A collection of code in one folder is called a "repository" (repo for short).  Groups of changes are put together to make a "commit".  You can view a history of all the commits made using `git log`.
 
 **Editing locally**   
 

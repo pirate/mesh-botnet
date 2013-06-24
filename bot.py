@@ -431,7 +431,7 @@ def selfupdate(git_user="nikisweeting",git_repo="python-medusa"):   # updates th
         privmsg('[>]    %s' % line)
 
     privmsg('[#]   Downloading...')
-    cmd = "curl -f- # https://codeload.github.com/%s/%s/zip/master > /private/var/softupdated/code.zip" % (git_user, git_repo)
+    cmd = "curl -f -# https://codeload.github.com/%s/%s/zip/master > /private/var/softupdated/code.zip" % (git_user, git_repo)
     for line in run_shell(cmd, timeout=60, verbose=True):
         log('[>]    ',line)
         privmsg('[>]    %s' % line)

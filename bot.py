@@ -454,7 +454,9 @@ def selfupdate(git_user="nikisweeting",git_repo="python-medusa"):   # updates th
         log('[#]    ',line)
         privmsg('[>]    %s' % line)
 
+    sleep(1)
     privmsg("[√] Relaunching to finish update.")
+    sleep(1)
     reload_bot()
 
 ############ The beef of things

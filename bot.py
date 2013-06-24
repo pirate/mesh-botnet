@@ -490,7 +490,7 @@ if __name__ == '__main__':
 
                 if data.find('ickname is already in use') != -1:
                     nick += str(random.randint(1,200))
-                    if len(nick) > 15: nick = '[%s]%s' % (local_user[:11], random.randint(1,99))
+                    if len(nick) > 15: nick = '[%s]%s' % (main_user[:11], random.randint(1,99))
                     timeout_count = 50
                     quit_status = False
                     break

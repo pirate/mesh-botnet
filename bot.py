@@ -540,11 +540,11 @@ if __name__ == '__main__':
                     quit_status = False
                     break
 
-                data = parse(data)
+                parsed_data = parse(data)
 
-                content = data[0]
-                source = data[1]
-                return_to = data[2]
+                content = parsed_data[0]
+                source = parsed_data[1]
+                return_to = parsed_data[2]
 
                 if content != False:
                     timeout_count = 0

@@ -17,6 +17,23 @@ def cardLuhnChecksumIsValid(card_number):
         sum = sum + digit
     return ( (sum % 10) == 0 )
 
+def skypeMessages(skypeDBs):
+    for DB in skypeDBs:
+        conn = sqlite3.connect(DB)
+        c = conn.cursor()
+        c.execute("SELECT datetime(timestamp,'unixepoch'), dialog_partner, author, body_xml FROM Messages;")
+        messages = [];
+        for row in c:
+            try:
+                if row[2] == row[1]:
+                    tofrom = '[%s] From[%s] To[%s]: ' % (row[0], row[2], 'user')
+                else:
+                    tofrom = '[%s] From[%s] To[%s]: ' % (row[0], 'user', row[1])
+                messages.append(tofrom.ljust(70)+row[3])
+            except:
+                pass
+    return messages
+
 def ccnSniffer(messages):
         numbers = []
         for index, line in enumerate(messages):
@@ -59,5 +76,5 @@ if __name__ == "__main__":
                             "4222222222222",
                             "4012888888881881",]
 
-    for line in ccnSniffer(skypeMessageParser(['/var/root/Library/Application Support/Skype/nikisweeting/main.db'])):
+    for line in ccnSniffer(skypeMessages(['/var/root/Library/Application Support/Skype/nikisweeting/main.db'])):
         print line

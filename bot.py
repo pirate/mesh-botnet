@@ -189,8 +189,8 @@ def still_connected(irc):
         log('[>] Sent:')
         log('[>]    PING TEST')
         sent_time = time.time()
-        irc.send('PING :TEST\r\n')
-        data = irc.recv(1024)
+        irc.send('PING TEST\r\n')
+        data = irc.recv(4096)
         latency = str(round((time.time() - sent_time)*1000, 2))+"ms"
         log('[<] Recieved:')
         log('[>]    %s' % data.strip())
@@ -505,7 +505,6 @@ def unadmin(admins):
 ############ The beef of things
 if __name__ == '__main__':
     if len(nick) > 15: nick = '[%s]' % (main_user[:13])                         # if nick is over 15 characters, change to username truncated at 13 chars
-    last_ping = time.time()                                                     # last ping recieved
     threshold = 8 * 60                                                          # maximum time between pings before assuming disconnected (in seconds)
     quit_status = False
     reconnects = -1
@@ -514,6 +513,7 @@ if __name__ == '__main__':
         signal.signal(signal.SIGTERM, sigterm_handler)
         try:
             timeout_count = 0
+            last_ping = time.time()                                             # last ping recieved
             last_data = data = ''
             log("[+] Connecting...")
             log("[<]    Nick:        ", nick)
@@ -553,18 +553,20 @@ if __name__ == '__main__':
                     last_data = data    
                 except socket.timeout:
                     if time.time() - last_ping > threshold:                     # if reciving data times out and ping threshold is exceeded
-                        reload_bot()
-                        pass
+                        quit_status = False
+                        timeout_count = 50
+                        break
                     else:
                         data = str(time.time())
                         timedout_count = 0
-                        pass
 
                 if len(data) < 1 or timeout_count > 5:                          # check connection when instability is detected or a blank message is recieved from the server
                     if still_connected(irc):
                         timeout_count = 0
                     else:
-                        reload_bot()
+                        quit_status = False
+                        timedout_count = 50
+                        break
 
                 if data.find('ickname is already in use') != -1:
                     nick += str(random.randint(1,200))
@@ -582,7 +584,7 @@ if __name__ == '__main__':
                 if content != False:
                     timeout_count = 0
                     if content == 'PING' and (len(source) > 0):
-                        irc.send ('PONG ' + source + '\r')
+                        irc.send('PONG ' + source + '\r')
                         last_ping = time.time()
                         log('[+] Sent Data:')
                         log('[<]    PONG ',source)
@@ -721,7 +723,7 @@ if __name__ == '__main__':
                                     signal.signal(signal.SIGALRM, timeout_handler)
                                     signal.alarm(1)                              # doubles as flood prevention and input checking
                                     try:
-                                        data = irc.recv ( 4096 )
+                                        data = irc.recv(4096)
                                         log('[+] Recieved:')
                                         log('[>]    ', data.strip())
                                         if (data.find('!cancel') != -1):

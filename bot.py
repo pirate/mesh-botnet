@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # MIT Liscence
-version = "7.5"                                                                 # bot version
+version = "7.6"                                                                 # bot version
 
 # library imports
 import socket

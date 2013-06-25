@@ -18,4 +18,5 @@ git commit -a -m "deploy of bot v$version"
 echo "[>] Pushing Changes..."
 git push origin master
 echo "[√] Done v$version deploy."
+say Finished version $version deployment.
 exit 0

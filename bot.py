@@ -469,7 +469,7 @@ def status_report(connection_time, timeout_count, last_ping):
     ping = round(time.time() - last_ping, 1)
     connected = round(time.time() - connection_time, 1)
 
-    cmd = "ping -q -c2 google.com | tail -1 | awk '{print $4}' | cut -d '/' -f 2"
+    cmd = "ping -q -c2 %s | tail -1 | awk '{print $4}' | cut -d '/' -f 2" % server
     try:
         ping_speed = os.popen(cmd).read().strip()
     except Exception as ping_error:

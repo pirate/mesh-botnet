@@ -185,15 +185,19 @@ def reload_bot():
     sys.exit()
 
 def still_connected(irc):
+    signal.signal(signal.SIGALRM, timeout_handler)
+    signal.alarm(2)
     try:
         irc.send('PING TEST')
         data = irc.recv(4096)
-        if data != 'PONG TEST':
+        if data.find('PONG') == -1:
             raise Exception("PING/PONG FAILED")
         else:
+            signal.alarm(0)
             return True
     except Exception as exit_exception:
         log("[X] Disconnected, PING failed after socket disconnected: %s" % exit_exception)
+        signal.alarm(0)
         return False
 
 ############ Keyword functions

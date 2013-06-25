@@ -244,7 +244,7 @@ def identify():                                                                 
     log('[>]    Public:  ',public_ip)
     mac_addr = ':'.join(['{:02x}'.format((uuid.getnode() >> i) & 0xff) for i in range(0,8*6,8)][::-1])
     log('[>]    MAC:     ',mac_addr)
-    return "[v%s/x%s] %s l: %s p: %s MAC: %s" % (version, system.strip(), (main_user+"@"+hostname).ljust(30), local_ip.ljust(15), public_ip.ljust(15), mac_addr)
+    return "[v%s/x%s] %s l: %s p: %s MAC: %s" % (version, system.strip(), (main_user[:14]+"@"+hostname[:14]).ljust(30), local_ip.ljust(15), public_ip.ljust(15), mac_addr)
  
 def full_identify():                                                            # give verbose identifying info about the host computer
     log('[+] Running v%s Identification Modules...' % version)

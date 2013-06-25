@@ -460,9 +460,9 @@ def selfupdate(git_user="nikisweeting",git_repo="python-medusa"):               
         log('[#]    ',line)
         privmsg('[>]    %s' % line)
 
-    sleep(1)
+    sleep(2)
     privmsg("[√] Relaunching to finish update.")
-    sleep(1)
+    sleep(2)
     reload_bot()
 
 def status_report(connection_time, timeout_count, last_ping):

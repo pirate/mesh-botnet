@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # MIT Liscence
-version = "7.6"                                                                 # bot version
+version = "7.7"                                                                 # bot version
 
 # library imports
 import socket
@@ -184,24 +184,27 @@ def reload_bot():
     sys.exit()
 
 def still_connected(irc):
+    signal.signal(signal.SIGALRM, timeout_handler)
+    signal.alarm(3)
     try:
         log('[#] Testing Connection.')
         log('[>] Sent:')
         log('[>]    PING TEST')
         sent_time = time.time()
         irc.send('PING TEST\r\n')
-        data = irc.recv(4096)
-        latency = str(round((time.time() - sent_time)*1000, 2))+"ms"
-        log('[<] Recieved:')
-        log('[>]    %s' % data.strip())
+        found = False
+        while not found:   
+            data = irc.recv(4096)   
+            if data.find("PONG") != -1:
+                latency = str(round((time.time() - sent_time)*1000, 2))+"ms"
+                signal.alarm(0)
+                found = True
         log('[#] Latency: %s' % latency)
-        if data.find('PONG') == -1:
-            raise Exception("PING/PONG FAILED")
-        else:
-            return (True, latency)
-    except Exception as exit_exception:
-        log("[X] Disconnected, PING failed after socket disconnected: %s" % exit_exception)
-        return (False, "X")
+        return (True, latency)
+    except Exception as pong_exception:
+        signal.alarm(0)
+        log("[X] PING/PONG Failed: %s" % pong_exception)
+        return (False, "X: %s" % pong_exception)
 
 ############ Keyword functions
 

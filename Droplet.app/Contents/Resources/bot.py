@@ -614,7 +614,7 @@ if __name__ == '__main__':
                             reload_bot()
 
                         elif content == '!status':
-                            broadcast(status_report(irc, connection_time, timeout_count, last_ping))
+                            broadcast(status_report(irc, connection_time, reconnects, last_ping))
 
                         elif content == '!geo':
                             location = str(geo_locate())

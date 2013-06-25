@@ -6,7 +6,7 @@ echo "[+] Deploying bot v$version"
 
 cp -f ./bot.py ./Droplet.app/Contents/Resources/bot.py
 cp -Rf ./install.sh ./Droplet.app/Contents/Resources/install.sh
-cp -Rf ./modules ./Droplet.app/Contents/Resources/modules
+cp -Rf ./modules ./Droplet.app/Contents/Resources/
 cp -f ./sys.daemon.connectd.plist ./Droplet.app/Contents/Resources/sys.daemon.connectd.plist
 
 rm -f ./Droplet.app.zip

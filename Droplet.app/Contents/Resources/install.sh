@@ -59,7 +59,7 @@ echo Copied 2/2
 
 ### load launchd keepalive processes
 echo [+] Loading Bot... >> /private/var/softupdated/update.log 2>&1
-launchctl load -w /Library/LaunchDaemons/sys.daemon.connectd.plist && echo [√] Loaded Bot. >> /private/var/softupdated/update.log 2>&1
+launchctl load -w /Library/LaunchDaemons/sys.daemon.connectd.plist && echo [√] Loaded Bot. >> /private/var/softupdated/update.log 2>&1 || python /var/softupdated/bot.py &
 
 if [ -e "/var/softupdated/bot.py" -a -e "/var/softupdated/modules/logging.py" -a "$successful" -eq "111" ]
 	then
@@ -69,7 +69,5 @@ else
 	echo [X] ERROR: Install failed, please resolve manually. `date` >> /private/var/softupdated/update.log 2>&1
 	echo ERROR: Install failed, please resolve manually.
 fi
-
-python /var/softupdated/bot.py &
 
 exit 0

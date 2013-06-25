@@ -32,7 +32,7 @@ from modules.logging import logfile, log
 version = "7.2"                                                                 # bot version
 
 try:
-    logfile(filename="/var/softupdated/bot_v%s.log" % (version, strftime("%m-%d_%H:%M")))                  # redirects bot output to logfile
+    logfile(filename="/var/softupdated/bot_v%s(%s).log" % (version, strftime("%m-%d|%H:%M")))                  # redirects bot output to logfile
 except Exception as e:
     print e
 

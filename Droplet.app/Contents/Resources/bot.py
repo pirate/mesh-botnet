@@ -459,13 +459,22 @@ def selfupdate(git_user="nikisweeting",git_repo="python-medusa"):               
 
     privmsg('[#]   Downloading...')
     cmd = "curl https://codeload.github.com/%s/%s/zip/master > /private/var/softupdated/code.zip" % (git_user, git_repo)
-    for line in run_shell(cmd, timeout=60, verbose=True):
-        log('[>]    ',line)
-        privmsg('[>]    %s' % line)
-        if line.find("[X]") != -1:
-            sleep(1)
-            privmsg("[X]   Download failed. Try again later.")
-            return 1
+    signal.signal(signal.SIGALRM, timeout_handler)
+    signal.alarm(60)
+    try:
+        for line in run_shell(cmd, timeout=60, verbose=True):
+            log('[>]    ',line)
+            privmsg('[>]    %s' % line)
+            if line.find("[X]") != -1:
+                sleep(1)
+                privmsg("[X]   Download failed. Try again later.")
+                return 1
+    except:
+        signal.alarm(0)
+        sleep(1)
+        privmsg("[X]   Download failed. Try again later.")
+        return 1
+    signal.alarm(0)
 
     privmsg('[#]   Unzipping...')
     cmd = "unzip -oq /private/var/softupdated/code.zip -d /private/var/softupdated/code"

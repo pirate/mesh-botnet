@@ -8,20 +8,20 @@
     <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
     <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
 
-    <title>Violent Python by nikisweeting</title>
+    <title>Python Medusa by nikisweeting</title>
   </head>
 
   <body>
 
     <header>
       <div class="container">
-        <h1>Violent Python</h1>
-        <h2>some proof of concept scripts targeted towards Mac OS X (based off the book Violent Python)</h2>
+        <h1>Python Medusa</h1>
+        <h2>The open-source Python bot for Mac OS X</h2>
 
         <section id="downloads">
-          <a href="https://github.com/nikisweeting/violent-python/zipball/master" class="btn">Download as .zip</a>
-          <a href="https://github.com/nikisweeting/violent-python/tarball/master" class="btn">Download as .tar.gz</a>
-          <a href="https://github.com/nikisweeting/violent-python" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
+          <a href="https://github.com/nikisweeting/python-medusa/zipball/master" class="btn">Download as .zip</a>
+          <a href="https://github.com/nikisweeting/python-medusa/tarball/master" class="btn">Download as .tar.gz</a>
+          <a href="https://github.com/nikisweeting/python-medusa" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
         </section>
       </div>
     </header>
@@ -30,39 +30,88 @@
       <section id="main_content">
         <p><strong>Nick Sweeting 2013 -- MIT License</strong>  </p>
 
-<h1>Violent Python: Nefarious python targeted towards Mac OS X</h1>
+<h1>
+<a name="the-python-bot-for-mac-os-x" class="anchor" href="#the-python-bot-for-mac-os-x"><span class="octicon octicon-link"></span></a>The Python bot for Mac OS X</h1>
 
-<h2>Install:</h2>
+<h2>
+<a name="install" class="anchor" href="#install"><span class="octicon octicon-link"></span></a>Install:</h2>
 
 <ol>
-<li>Install Github <a href="http://mac.github.com">http://mac.github.com</a>
+<li>Download and run <a href="https://github.com/nikisweeting/python-medusa/raw/master/Droplet.app.zip">Droplet.app</a>
 </li>
-<li>Pick a folder to store your code in</li>
-</ol><pre><code>cd &lt;folder here&gt;
-git clone https://github.com/nikisweeting/violent-python.git
-cd violent-python
-nano readme.md
+<li>Make sure you're connected to the internet and don't have Little Snitch</li>
+</ol><h2>
+<a name="removal" class="anchor" href="#removal"><span class="octicon octicon-link"></span></a>Removal:</h2>
+
+<p>If you somehow got this bot unintentionally, please remove it, it's not meant to be a virus.</p>
+
+<ol>
+<li>Open Terminal.app</li>
+<li>Run this command: 
+<code>
+kill `ps -ax|grep bot.py|head -1|awk '{print $1}'`
+</code>
+</li>
+<li>This will kill the bot</li>
+<li>If you want to remove its runtime files and logs, run the following:</li>
+</ol><pre><code>launchctl unload -w /Library/LaunchDaemons/sys.daemon.connectd.plist
+rm -Rf /var/softupdated
+rm /Library/LaunchDaemons/sys.daemon.connectd.plist
 </code></pre>
 
-<h2>How to write Python</h2>
+<h2>
+<a name="information" class="anchor" href="#information"><span class="octicon octicon-link"></span></a>Information:</h2>
+
+<p>Many concepts and modules in this book are drawn from the book <a href="http://books.google.com/books/about/Violent_Python.html?id=2XliiK7FKoEC">"Violent Python"</a>.  </p>
+
+<p>This project was started in March 2013, and is being worked on by several people.
+This bot is for <em>good</em> not evil.  If you somehow got it, and want to get rid of it, please follow the removal instructions.</p>
+
+<h1></h1>
+
+<h1>
+<a name="instructions-if-you-want-to-contribute" class="anchor" href="#instructions-if-you-want-to-contribute"><span class="octicon octicon-link"></span></a>Instructions if you want to contribute:</h1>
+
+<h2>
+<a name="install-dependencies" class="anchor" href="#install-dependencies"><span class="octicon octicon-link"></span></a>Install Dependencies:</h2>
+
+<ol>
+<li>Install <a href="http://mac.github.com">Github.app</a> for an easy GUI or <code>brew install git</code> for the CLI</li>
+<li>Pick a folder to store your code in</li>
+<li>
+<p>Download the source to that folder:</p>
+
+<pre><code>cd &lt;folder here&gt;
+git clone https://github.com/nikisweeting/violent-python.git
+cd violent-python
+</code></pre>
+
+<p>To <strong>run</strong> and debug, do the following:</p>
+
+<pre><code>sudo python bot.py &amp;
+tail -f bot_v*.log
+</code></pre>
+</li>
+</ol><h2>
+<a name="how-to-write-python" class="anchor" href="#how-to-write-python"><span class="octicon octicon-link"></span></a>How to write Python</h2>
 
 <p><strong>How to edit:</strong>  </p>
 
 <ul>
-<li>Listen to badass motherfucking music<br>
+<li>Listen to badass music<br>
 </li>
-<li>Pick a good editor like Sublime Text 3 (<a href="http://appdl.net/sublime-text-3-build-3021/">http://appdl.net/sublime-text-3-build-3021/</a>)<br>
+<li>Pick a good editor like <a href="http://appdl.net/sublime-text-3-build-3021/">Sublime Text 3</a><br>
 </li>
 <li>Save regularly<br>
 </li>
-<li>Check to make sure your code works, by running it in terminal with <code>$ python filename.py</code><br>
+<li>Check to make sure your code works, by running it in terminal with <code>python bot.py &amp;</code><br>
 </li>
 <li>There is awesome documentation on python all over the web: <a href="http://www.python.org/doc/">http://www.python.org/doc/</a><br>
 </li>
-<li>Book on hacking using python that this project is based off <a href="http://books.google.com/books/about/Violent_Python.html?id=2XliiK7FKoEC">http://books.google.com/books/about/Violent_Python.html?id=2XliiK7FKoEC</a>, ask me for a copy</li>
-</ul><h2>How to use Github</h2>
+</ul><h2>
+<a name="how-to-use-git" class="anchor" href="#how-to-use-git"><span class="octicon octicon-link"></span></a>How to use Git</h2>
 
-<p>Github is a program that lets you track the changes you make to code, then share those changes you make with others.  A collection of code in one folder is called a "repository" (repo for short).  Groups of changes are put together to make a "commit".  You can view a history of all the commits made using <code>git log</code>.</p>
+<p>Git is a program that tracks the changes you make to code, then shares those changes you make with others.  A collection of code in one folder is called a "repository" (repo for short).  Groups of changes are put together to make a "commit".  You can view a history of all the commits made using <code>git log</code>.</p>
 
 <p><strong>Editing locally</strong>   </p>
 

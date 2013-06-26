@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # MIT Liscence
-version = "7.8"                                                                 # bot version
+version = "7.9"                                                                 # bot version
 
 # library imports
 import socket
@@ -41,7 +41,7 @@ log("[*] IRC BOT v%s" % version)
 
 server = 'irc.freenode.net'
 port = 6667
-channel = '#skypeupdate'
+channel = '##medusa'
 source_checking_enabled = True
 allowed_sources = ["thesquash"]                                                 # only accept commands from these nicks
 admin = 'thesquash'                                                             # the nick to send privmsgs to by default

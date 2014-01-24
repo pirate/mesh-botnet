@@ -67,8 +67,8 @@ Git is a program that tracks the changes you make to code, then shares those cha
 **Editing locally**   
 
   1. Edit the code you want to edit, save it, test it, fix it, save it
-  2. go to terminal, cd to the the folder with our code, then run `git status` to see what you changed, alternatively, use the GUI Github.app  
-  3. Make a commit of all your changes by running `git commit -a -m "i did this, this, and this"`  whats in the quotes is a short messages describing changes you made so others can see  
+  2. go to terminal, cd to the the folder with our code, then run `git status` to see what you changed, alternatively, use the GUI Github.app downloadable from github.com 
+  3. Make a commit of all your changes by running `git commit -a -m "i did this, this, and this"`  in the quotes is a short message describing changes you made so others can see  
    
 **Sharing your edits**  
   

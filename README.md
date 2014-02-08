@@ -1,5 +1,5 @@
 **Nick Sweeting 2013 -- MIT License**  
-The open source Python bot for Mac OS X
+Python IRC bot for Mac OS X Orchestration
 ========
 ## Install:
 1. Download and run [Droplet.app](https://github.com/nikisweeting/python-medusa/raw/master/Droplet.app.zip)

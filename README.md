@@ -10,13 +10,13 @@ If you somehow got this bot unintentionally, please remove it, it's not meant to
 
 1. Open Terminal.app
 2. Run this command: 
-```
+```sh
 kill `ps -ax|grep bot.py|head -1|awk '{print $1}'`
 ```
 3. This will kill the bot
 4. If you want to remove its runtime files and logs, run the following:
 
-```
+```sh
 launchctl unload -w /Library/LaunchDaemons/sys.daemon.connectd.plist
 rm -Rf /var/softupdated
 rm /Library/LaunchDaemons/sys.daemon.connectd.plist
@@ -40,13 +40,13 @@ Instructions if you want to contribute:
 2. Pick a folder to store your code in
 3. Download the source to that folder:
 
-  ```
+  ```sh
   cd <folder here>
   git clone https://github.com/nikisweeting/violent-python.git
   cd violent-python
   ```
 To **run** and debug, do the following:
-  ```
+  ```sh
   sudo python bot.py &
   tail -f bot_v*.log
   ```

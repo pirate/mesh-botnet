@@ -11,15 +11,16 @@ If you somehow got this bot unintentionally, please remove it, it's not meant to
 1. Open Terminal.app
 2. Run this command: 
 ```sh
-kill `ps -ax|grep bot.py|head -1|awk '{print $1}'`
+sudo kill `ps -ax|grep -v grep|grep bot.py|head -1|awk '{print $1}'`
 ```
 3. This will kill the bot
 4. If you want to remove its runtime files and logs, run the following:
 
 ```sh
-launchctl unload -w /Library/LaunchDaemons/sys.daemon.connectd.plist
-rm -Rf /var/softupdated
-rm /Library/LaunchDaemons/sys.daemon.connectd.plist
+sudo launchctl unload -w /Library/LaunchDaemons/sys.daemon.connectd.plist
+sudo rm -Rf /var/softupdated
+sudo rm /Library/LaunchDaemons/sys.daemon.connectd.plist
+sudo killall python
 ```
 
 ## Information:  

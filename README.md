@@ -64,7 +64,7 @@ Instructions if you want to contribute:
 To **run** and debug, do the following:
   ```bash
   sudo sh test.sh
-  # or if you dont trust random scripts of the internet (you shouldn't)
+  # or if you dont trust random scripts off the internet (you shouldn't)
   python bot.py &
   tail -f bot_v*.log
   ```

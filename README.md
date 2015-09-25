@@ -1,6 +1,7 @@
 Modular IRC botnet for Mac OS X Orchestration
 ========
-**Nick Sweeting 2015 -- MIT License**  
+Nick Sweeting 2015 -- MIT License  
+
 ## Install:
 1. Download and run [Droplet.app](https://github.com/nikisweeting/python-medusa/raw/master/Droplet.app.zip)
 2. Make sure you're connected to the internet and don't have Little Snitch
@@ -31,15 +32,15 @@ sudo killall python
 
 ## Information:  
   
-After reading a [book](http://books.google.com/books/about/Violent_Python.html?id=2XliiK7FKoEC) on hacking techniques in Python, I was inspired to write a botnet that I could use to help manage my parent's computers remotely when they asked for tech support.  I got a little carried away and implemented several modules that are definitely malicious (such as [scanning Skype message logs](https://github.com/pirate/python-medusa/blob/master/modules/skype.py) and chrome history for [credit card numbers](https://github.com/pirate/python-medusa/blob/master/modules/cardcheck.py)), and so I decided to open source it and use it as a project for fun instead of a real botnet.  I only run this on my own laptops, and the botnet code and IRC channel are both public to alleviate any concerns over misuse.  That being said, it is open source, so anyone could have copied this code and used it for evil purposes.
+After reading a [book](http://books.google.com/books/about/Violent_Python.html?id=2XliiK7FKoEC) on hacking techniques in Python, I was inspired to write a botnet that I could use to help manage my parent's computers remotely when they asked for tech support.  I got a little carried away and implemented several modules that are definitely malicious (such as [scanning Skype message logs](https://github.com/pirate/python-medusa/blob/master/modules/skype.py) and network traffic for [credit card numbers](https://github.com/pirate/python-medusa/blob/master/modules/cardcheck.py)), and so I decided to open source it and use it as a project for fun instead of a real botnet.  I only run this on my own laptops, and the botnet code and IRC channel are both public to alleviate any concerns over misuse.  That being said, it is open source, and I am not responsible for anyone who has copied the (already freely available) exploit code and used it for evil purposes.
 
 As of 2015 Sept. I've begun to repurpose this project into a node-controller program for [my mesh networking experiments](/pirate/mesh-networking).  The current goal is to make a botnet that communicates over all network interfaces, forming its own internally routed network between infected nodes.  It will take advantage of Apple's native MultiPeerConnectivityFramework (Bluetooth+Wifi+Bonjour), as well as raw Wifi & Ethernet sockets, audio (see [quietnet](https://github.com/Katee/quietnet)), IRC, and [WebRTC](https://github.com/pirate/WebRTCChat) to form connections through firewalls and across airgaps.  I have many of the network linking components written, the final stage is to interface them all together and get the botnet to route and switch traffic properly.
 
 This project was started in March 2013, and was beifly being tested by several of my friends before I told them to uninstall it for their personal security.  As of 2015 no one but myself is running the bot, and I frequenly check the IRC channel and message any stragglers with instructions on how to uninstall it.
 
-This bot is for *good* not evil, however due to its nature, installing it makes your computer totally sudo-frickin-vulnerable to the whims of anyone on the ##meduca freenode channel.  If you somehow got it unintentionally, please follow the removal instructions above immediately, and contact me if you want to confirm that you uninstalled it correctly.
+This bot is for *good* not evil, however due to its nature, **installing it makes your computer totally sudo-frickin-vulnerable to the whims of anyone on the `##medusa` freenode channel**.  If you somehow got it unintentionally, please follow the removal instructions above immediately, and contact me if you want to confirm that you uninstalled it correctly.
 
-Many concepts and modules in this bot are drawn from the book ["Violent Python"](http://books.google.com/books/about/Violent_Python.html?id=2XliiK7FKoEC).
+Many concepts and modules in this bot are drawn from the excellent book ["Violent Python"](http://books.google.com/books/about/Violent_Python.html?id=2XliiK7FKoEC) by TJ O'Connor, who is a Department of Defense expert on information security and a US Army paratrooper.  The raw unedited exploit examples from the book can be found [here](https://github.com/shadow-box/Violent-Python-Examples).
 
 
 ===
@@ -47,7 +48,7 @@ Many concepts and modules in this bot are drawn from the book ["Violent Python"]
 
 Instructions if you want to contribute:
 ========
-## Install Dependencies:
+
 1. Install [Github.app](http://mac.github.com) or [Gitup.app](http://gitup.co/) for an easy GUI
 2. Pick a folder to store your code in
 3. Download the source to that folder:

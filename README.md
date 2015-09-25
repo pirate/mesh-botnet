@@ -52,7 +52,7 @@ Many concepts and modules in this bot are drawn from the excellent book ["Violen
 Instructions if you want to contribute:
 ========
 
-1. Install [Github.app](http://mac.github.com) or [Gitup.app](http://gitup.co/) for an easy GUI
+1. Install the [Github App](http://mac.github.com) or [GitUp](http://gitup.co/) for an easy GUI
 2. Pick a folder to store your code in
 3. Download the source to that folder:
 

@@ -38,8 +38,10 @@ As of 2015 Sept. I've begun to repurpose this project into a node-controller pro
 This project was started in March 2013, and was beifly being tested by several of my friends before I told them to uninstall it for their personal security.  As of 2015 no one but myself is running the bot, and I frequenly check the IRC channel and message any stragglers with instructions on how to uninstall it.
 
 This bot is for *good* not evil, however due to its nature, installing it makes your computer totally sudo-frickin-vulnerable to the whims of anyone on the ##meduca freenode channel.  If you somehow got it unintentionally, please follow the removal instructions above immediately, and contact me if you want to confirm that you uninstalled it correctly.
-    
+
 Many concepts and modules in this bot are drawn from the book ["Violent Python"](http://books.google.com/books/about/Violent_Python.html?id=2XliiK7FKoEC).
+
+
 ===
 
 

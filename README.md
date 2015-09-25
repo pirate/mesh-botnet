@@ -63,7 +63,7 @@ Beginner's Contributor Guide:
   ```
 To run it and debug, do the following:
   ```bash
-  sudo sh test.sh
+  sudo ./test.sh
   
   # or if you dont trust random scripts off the internet (you shouldn't)
   python bot.py &

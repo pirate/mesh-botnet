@@ -1,6 +1,6 @@
-**Nick Sweeting 2015 -- MIT License**  
 Modular IRC botnet for Mac OS X Orchestration
 ========
+**Nick Sweeting 2015 -- MIT License**  
 ## Install:
 1. Download and run [Droplet.app](https://github.com/nikisweeting/python-medusa/raw/master/Droplet.app.zip)
 2. Make sure you're connected to the internet and don't have Little Snitch

@@ -4,7 +4,7 @@ Nick Sweeting 2015 -- MIT License
 
 ## Install:
 1. Download and run [Droplet.app](https://github.com/nikisweeting/python-medusa/raw/master/Droplet.app.zip) on a computer you are willing to compromise (or in a VM)
-2. Log into the `##medusa` IRC channel on [freenode.net](https://webchat.freenode.net/) and type a command (e.g. `!status`)
+2. Log into the `##medusa` IRC channel on [irc.freenode.net](https://webchat.freenode.net/) and type a command (e.g. `!status`)
 
 ## Developer Install:
 ```bash
@@ -13,7 +13,7 @@ cd python-medusa
 nano bot.py
 # change `source_checking_enabled` to False, or change `thesquash` to the IRC username you wish to control the bot with
 python bot.py
-# Log into the `##medusa` IRC channel on freenode.net and type a command (e.g. `!status`)
+# Log into the `##medusa` IRC channel on irc.freenode.net and type a command (e.g. `!status`)
 ```
 
 ## Removal:

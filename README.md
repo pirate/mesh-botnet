@@ -61,7 +61,7 @@ Beginner's Contributor Guide:
   git clone https://github.com/pirate/python-medusa.git
   cd python-medusa
   ```
-To run it and debug, do the following:
+4. To run it and debug, do the following:
   ```bash
   sudo ./test.sh
   

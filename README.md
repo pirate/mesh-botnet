@@ -13,7 +13,7 @@ cd python-medusa
 nano bot.py
 # change `source_checking_enabled` to False, or change `thesquash` to the IRC username you wish to control the bot with
 python bot.py
-# Log into the `##medusa` IRC channel on freenode.net and type a command (e.g. `!status`)
+# Log into the `##medusa` IRC channel on [freenode.net](https://webchat.freenode.net/) and type a command (e.g. `!status`)
 ```
 
 ## Removal:

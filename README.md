@@ -70,7 +70,6 @@ To run it and debug, do the following:
   tail -f bot_v*.log
   ```
 
-## How to write Python
   
 * Listen to badass music, you're a real hacker now!  
 * Pick a good editor like [Sublime Text 3](http://appdl.net/sublime-text-3-build-3021/)  

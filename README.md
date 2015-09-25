@@ -1,4 +1,4 @@
-Modular IRC botnet for Mac OS X Orchestration
+IRC botnet for Controlling Mac OS X Computers
 ========
 Nick Sweeting 2015 -- MIT License  
 

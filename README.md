@@ -57,7 +57,7 @@ Instructions if you want to contribute:
 3. Download the source to that folder:
 
   ```bash
-  cd <folder here>
+  cd ~/Desktop/
   git clone https://github.com/pirate/python-medusa.git
   cd python-medusa
   ```

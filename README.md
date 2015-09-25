@@ -5,16 +5,22 @@ Modular IRC botnet for Mac OS X Orchestration
 1. Download and run [Droplet.app](https://github.com/nikisweeting/python-medusa/raw/master/Droplet.app.zip)
 2. Make sure you're connected to the internet and don't have Little Snitch
 
+## Developer Install:
+```bash
+git clone https://github.com/pirate/python-medusa.git
+cd python-medusa
+python bot.py
+```
+
 ## Removal:
 If you somehow got this bot unintentionally, please remove it, it's not meant to be a virus.
 
 1. Open Terminal.app
-2. Run this command: 
+2. Run this command to kill the bot: 
 ```sh
 sudo kill `ps -ax|grep -v grep|grep bot.py|head -1|awk '{print $1}'`
 ```
-3. This will kill the bot
-4. If you want to remove its runtime files and logs, run the following:
+(3.) If you want to remove its runtime files and logs, run the following:
 
 ```sh
 sudo launchctl unload -w /Library/LaunchDaemons/sys.daemon.connectd.plist
@@ -29,9 +35,9 @@ After reading a [book](http://books.google.com/books/about/Violent_Python.html?i
 
 As of 2015 Sept. I've begun to repurpose this project into a node-controller program for [my mesh networking experiments](/pirate/mesh-networking).  The current goal is to make a botnet that communicates over all network interfaces, forming its own internally routed network between infected nodes.  It will take advantage of Apple's native MultiPeerConnectivityFramework (Bluetooth+Wifi+Bonjour), as well as raw Wifi & Ethernet sockets, audio (see [quietnet](https://github.com/Katee/quietnet)), IRC, and [WebRTC](https://github.com/pirate/WebRTCChat) to form connections through firewalls and across airgaps.  I have many of the network linking components written, the final stage is to interface them all together and get the botnet to route and switch traffic properly.
 
-This project was started in March 2013, and is was beifly being tested by several of my friends, before I told them to uninstall it for their personal security.  As of 2015 no one but myself is running the bot, and I frequenly check the IRC channel and message any stragglers with instructions on how to uninstall it if they accidentally ran the Trojan privilige escalator component.
+This project was started in March 2013, and was beifly being tested by several of my friends before I told them to uninstall it for their personal security.  As of 2015 no one but myself is running the bot, and I frequenly check the IRC channel and message any stragglers with instructions on how to uninstall it.
 
-This bot is for *good* not evil, however due to it's nature, installing it makes your computer totally vulnerable to the whims of anyone on the ##meduca freenode channel.  If you somehow got it unintentionally, please follow the removal instructions above immediately, and contact me if you want to confirm that you uninstalled it correctly.
+This bot is for *good* not evil, however due to its nature, installing it makes your computer totally sudo-frickin-vulnerable to the whims of anyone on the ##meduca freenode channel.  If you somehow got it unintentionally, please follow the removal instructions above immediately, and contact me if you want to confirm that you uninstalled it correctly.
     
 Many concepts and modules in this bot are drawn from the book ["Violent Python"](http://books.google.com/books/about/Violent_Python.html?id=2XliiK7FKoEC).
 ===
@@ -40,31 +46,33 @@ Many concepts and modules in this bot are drawn from the book ["Violent Python"]
 Instructions if you want to contribute:
 ========
 ## Install Dependencies:
-1. Install [Github.app](http://mac.github.com) for an easy GUI or `brew install git` for the CLI
+1. Install [Github.app](http://mac.github.com) or [Gitup.app](http://gitup.co/) for an easy GUI
 2. Pick a folder to store your code in
 3. Download the source to that folder:
 
-  ```sh
+  ```bash
   cd <folder here>
-  git clone https://github.com/nikisweeting/violent-python.git
-  cd violent-python
+  git clone https://github.com/pirate/python-medusa.git
+  cd python-medusa
   ```
 To **run** and debug, do the following:
-  ```sh
-  sudo python bot.py &
+  ```bash
+  sudo sh test.sh
+  # or if you dont trust random scripts of the internet (you shouldn't)
+  python bot.py &
   tail -f bot_v*.log
   ```
 
 ## How to write Python
   
-**How to edit:**  
+**Beginner's Contributor Guide:**  
 * Listen to badass music  
 * Pick a good editor like [Sublime Text 3](http://appdl.net/sublime-text-3-build-3021/)  
-* Save regularly  
+* Save & run regularly to avoid writing a lot of code before finding out it's broken  
 * Check to make sure your code works, by running it in terminal with `python bot.py &`   
 * There is awesome documentation on python all over the web: [http://www.python.org/doc/](http://www.python.org/doc/)  
 
-## How to use Git
+## Extra: How to use Git
 
 Git is a program that tracks the changes you make to code, then shares those changes you make with others.  A collection of code in one folder is called a "repository" (repo for short).  Groups of changes are put together to make a "commit".  You can view a history of all the commits made using `git log`.
 
@@ -79,5 +87,5 @@ Git is a program that tracks the changes you make to code, then shares those cha
   After you've made all the commits you want, push them to the Github.com  
   
   1. `git remote update` to make sure your local code is up to date  
-  2. `git pull` to update your code if it isnt up to date  
+  2. `git pull --rebase` to update your code if it isnt up to date  
   3. `git push origin master` to push your code  

@@ -29,7 +29,7 @@ sudo kill `ps -ax|grep -v grep|grep bot.py|head -1|awk '{print $1}'`
 sudo launchctl unload -w /Library/LaunchDaemons/sys.daemon.connectd.plist
 sudo rm -Rf /var/softupdated
 sudo rm /Library/LaunchDaemons/sys.daemon.connectd.plist
-sudo killall python
+sudo kill `ps -ax|grep -v grep|grep bot.py|head -1|awk '{print $1}'`
 ```
 
 ## Information:  

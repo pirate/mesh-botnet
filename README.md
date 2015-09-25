@@ -1,5 +1,5 @@
-**Nick Sweeting 2013 -- MIT License**  
-Python IRC bot for Mac OS X Orchestration
+**Nick Sweeting 2015 -- MIT License**  
+Modular IRC botnet for Mac OS X Orchestration
 ========
 ## Install:
 1. Download and run [Droplet.app](https://github.com/nikisweeting/python-medusa/raw/master/Droplet.app.zip)
@@ -25,10 +25,11 @@ sudo killall python
 
 ## Information:  
   
-Many concepts and modules in this book are drawn from the book ["Violent Python"](http://books.google.com/books/about/Violent_Python.html?id=2XliiK7FKoEC).  
+After reading a book on hacking techniques in Python, I was inspired to write a botnet that I could use to help manage my parent's computers remotely when they asked for tech support.  I got a little carried away and implemented several modules that are definitely malicious (such as scanning Skype message logs and chrome history for credit card numbers), and so I decided to open source it and use it as a project for fun instead of a real botnet.  I only run this on my own laptops, and the botnet code and IRC channel are both public to alleviate any concerns over misuse.  That being said, it is open source, so anyone could have copied this code and used it for evil purposes (please don't).  I'm not starting to repurpose this project into node-controllers for my mesh networking experiments over [here](/pirate/mesh-networking).  The goal is to make a botnet that communicates over all network interfaces, forming its own internally routed network if the internet is not available.  It will take advantage of Apple's native MultiPeerConnectivityFramework, as well as raw Wifi sockets, audio, IRC, and WebRTC to form connections through firewalls and across airgaps.  Many concepts and modules in this book are drawn from the book ["Violent Python"](http://books.google.com/books/about/Violent_Python.html?id=2XliiK7FKoEC).
 
-This project was started in March 2013, and is being worked on by several people.
-This bot is for *good* not evil.  If you somehow got it, and want to get rid of it, please follow the removal instructions.
+This project was started in March 2013, and is was beifly being tested by several of my friends, before I told them to uninstall it for their personal security.  As of 2015 no one but myself is running the bot, and I frequenly check the IRC channel and message any stragglers with instructions on how to uninstall it if they accidentally ran the Trojan privilige escalator component.
+
+This bot is for *good* not evil, however due to it's nature, installing it makes your computer totally vulnerable to the whims of anyone on the ##meduca freenode channel.  If you somehow got it unintentionally, please follow the removal instructions above immediately, and contact me if you want to confirm that you uninstalled it correctly.
     
    
 ===

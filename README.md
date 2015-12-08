@@ -45,6 +45,10 @@ This bot is for *good* not evil, however due to its nature, **installing it make
 
 Many concepts and modules in this bot are drawn from the excellent book ["Violent Python"](http://books.google.com/books/about/Violent_Python.html?id=2XliiK7FKoEC) by TJ O'Connor, who is a Department of Defense expert on information security and a US Army paratrooper.  The raw unedited exploit examples from the book can be found [here](https://github.com/shadow-box/Violent-Python-Examples).
 
+Screenshots:  
+========
+![](http://imgur.com/Kp0dPru.png)  
+![](http://imgur.com/tu8y9ym.png)
 
 ===
 

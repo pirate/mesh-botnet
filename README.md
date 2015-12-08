@@ -47,7 +47,7 @@ Many concepts and modules in this bot are drawn from the excellent book ["Violen
 
 Screenshots:  
 ========
-![](http://imgur.com/Kp0dPru.png)  
+![](http://i.imgur.com/Bg2ZxN4.png)  
 ![](http://imgur.com/tu8y9ym.png)
 
 ===

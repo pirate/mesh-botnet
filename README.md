@@ -47,10 +47,16 @@ Many concepts and modules in this bot are drawn from the excellent book ["Violen
 
 Screenshots:  
 ========
+**1. Trojan impersonates Google Chrome and unwitting victim types in their password*:**  
+![](http://i.imgur.com/200NfKl.png)  
+**2. Bot installs installs itself with boot hook and connects to the C&C IRC channel:**  
+![](http://i.imgur.com/FEIRtR3.png)  
+**3. Victim can be controlled by sending a privmsg to the bot:**  
 ![](http://i.imgur.com/KJnwaGU.png)  
+**4. Bots can be controlled en-masse by sending commands to the whole C&C channel:**
 ![](http://imgur.com/tu8y9ym.png)
 
-===
+\* I removed the Google Chrome trojan because I don't want script kiddies finding this and using it on people, it's trivial to modify Droplet.app into a real trojan if needed though.
 
 
 Beginner's Contributor Guide:  

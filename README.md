@@ -56,7 +56,8 @@ Screenshots:
 **4. Bots can be controlled en-masse by sending commands to the whole C&C channel:**
 ![](http://imgur.com/tu8y9ym.png)
 
-\* I removed the Google Chrome trojan because I don't want script kiddies finding this and using it on people, it's trivial to modify Droplet.app into a real trojan if needed though.
+\* I removed the Google Chrome trojan because I don't want script kiddies finding this and using it on people, it's trivial to modify Droplet.app into a real trojan if needed though.  
+\*\* 2016 note: this infection vector no longer works due to Gatekeeper and SIP.  Gatekeeper prevents a fake Chrome from launching without a valid developer ID, and SIP prevents the installer from copying files into `/var/`.
 
 
 Beginner's Contributor Guide:  

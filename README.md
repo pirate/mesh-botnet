@@ -1,6 +1,9 @@
 IRC botnet for Controlling Mac OS X Computers
 ========
 
+Don't worry this bot is not a danger to anyone.  It would be incredibly difficult to 
+install it on anyone's computer these days as you'd have to disable SIP & Gatekeeper.
+
 ## Install:
 1. Download and run [Droplet.app](https://github.com/nikisweeting/python-medusa/raw/master/Droplet.app.zip) on a **computer you are willing to compromise (this is a botnet that exposes unlimited access to your computer!)** (or in a VM)
 2. Log into the `##medusa` IRC channel on [irc.freenode.net](https://webchat.freenode.net/) and type a command (e.g. `!status`)

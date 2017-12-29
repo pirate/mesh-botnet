@@ -26,7 +26,7 @@ If you somehow got this bot unintentionally, please remove it, it's not meant to
 ```sh
 sudo kill `ps -ax|grep -v grep|grep bot.py|head -1|awk '{print $1}'`
 ```
-(3.) If you want to remove its runtime files and logs, run the following:
+3. Remove its runtime files, logs, and boot persistence with the following:
 
 ```sh
 sudo launchctl unload -w /Library/LaunchDaemons/sys.daemon.connectd.plist

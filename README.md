@@ -1,24 +1,15 @@
-IRC botnet for Controlling Mac OS X Computers
+Mesh-Networking Demonstration: IRC Botnet App
 ========
 
 python-medusa is a demo of simple intrusion and virus building concepts introduced in
-the book "Violent Python", a funny overview of Python & system security by
-a US Military Paratrooper. It's also a demonstration of my mesh-networking
-library, which needs a large, organic, networked app to show off its true capability.
+the book "Violent Python", to be run on the test bed provided by mesh-networking.
+The book is a a funny overview of Python & system security by
+a US Military Paratrooper, and I highly recommend checking it out. This is an ideal demonstration
+of the mesh-networking project because it needs a large, organic, networked app to show off its true capability.
 
 It would be incredibly difficult to install or get away with using this for malicious purposes
-in the real world, as it makes no attempts to shield communications or evade filesystem detection in any way.
-SIP, Gatekeeper, and numerous other systems also make it much more difficult to run, or persist unsigned binaries these days.
-
-## Install:
-
-**installing this makes your VM totally sudo-frickin-vulnerable to the whims of anyone on the `##medusa` freenode channel**
-
-1. Download and unzip [Droplet.app](https://github.com/nikisweeting/python-medusa/raw/master/Droplet.app.zip)
-2. Right Click > Show Contents...
-3. In bot.py edit '##medusa' to an IRC channel of your choice
-4. Run Droplet.app, **only do this on a VM you are willing to compromise (this executable exposes unlimited root access on your VM to a public IRC channel!)**
-2. Log into your IRC channel (you can make one on [irc.freenode.net](https://webchat.freenode.net/) and type a command (e.g. `!status`))
+in the real world. It makes no attempts to shield communications or evade filesystem detection in any way because the
+mesh-networking hosts are not adversarial and do not have any of the protection measures like SIP or Gatekeeper.
 
 ## Developer Install:
 ```bash
@@ -27,11 +18,10 @@ cd python-medusa
 nano bot.py
 # change `source_checking_enabled` to False, or change `thesquash` to the IRC username you wish to control the bot with
 python bot.py
-# Log into the `##medusa` IRC channel on irc.freenode.net and type a command (e.g. `!status`)
+# Log into your test IRC channel on irc.freenode.net and type a command (e.g. `!status`)
 ```
 
-## Removal:
-If you somehow got this bot unintentionally, please remove it, it's not meant to be a virus.
+## Uninstall:
 
 1. Open Terminal.app
 2. Run this command to kill the bot: 
@@ -68,11 +58,9 @@ Screenshots:
 **4. Bots can be controlled en-masse by sending commands to the whole C&C channel:**
 ![](http://imgur.com/tu8y9ym.png)
 
-\* I removed the Google Chrome trojan because I don't want script kiddies finding this and using it on people, it's trivial to modify Droplet.app into a real trojan if needed though.  
-\*\* 2016 note: this infection vector no longer works due to Gatekeeper and SIP.  Gatekeeper prevents a fake Chrome from launching without a valid developer ID, and SIP prevents the installer from copying files into `/var/`.
+\* I removed the Google Chrome trojan from github because I don't want script kiddies finding this and using it on people.
 
-
-Beginner's Contributor Guide:  
+Development Guide:  
 ========
 
 1. Install the [Github App](http://mac.github.com) or [GitUp](http://gitup.co/) for an easy GUI

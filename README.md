@@ -14,8 +14,11 @@ SIP, Gatekeeper, and numerous other systems also make it much more difficult to 
 
 **installing this makes your VM totally sudo-frickin-vulnerable to the whims of anyone on the `##medusa` freenode channel**
 
-1. Download and run [Droplet.app](https://github.com/nikisweeting/python-medusa/raw/master/Droplet.app.zip) on a **VM you are willing to compromise (this executable exposes unlimited root access on your VM to a public IRC channel!)**
-2. Log into the `##medusa` IRC channel on [irc.freenode.net](https://webchat.freenode.net/) and type a command (e.g. `!status`)
+1. Download and unzip [Droplet.app](https://github.com/nikisweeting/python-medusa/raw/master/Droplet.app.zip)
+2. Right Click > Show Contents...
+3. In bot.py edit '##medusa' to an IRC channel of your choice
+4. Run Droplet.app, **only do this on a VM you are willing to compromise (this executable exposes unlimited root access on your VM to a public IRC channel!)**
+2. Log into your IRC channel (you can make one on [irc.freenode.net](https://webchat.freenode.net/) and type a command (e.g. `!status`))
 
 ## Developer Install:
 ```bash

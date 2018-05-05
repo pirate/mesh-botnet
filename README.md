@@ -54,12 +54,13 @@ Screenshots:
 ![](http://i.imgur.com/200NfKl.png)  
 **2. Bot installs installs itself with boot hook and connects to the C&C IRC channel:**  
 ![](http://i.imgur.com/FEIRtR3.png)  
-**3. Victim can be controlled by sending a privmsg to the bot:**  
+**3. Host can be controlled by sending a privmsg to the bot:**  
 ![](http://i.imgur.com/KJnwaGU.png)  
 **4. Bots can be controlled en-masse by sending commands to the whole C&C channel:**
 ![](http://imgur.com/tu8y9ym.png)
 
-\* I removed the Google Chrome trojan from github because I don't want script kiddies finding this and using it on people.
+\* I removed the Google Chrome trojan from Github because I don't want script kiddies finding 
+this and attempting to use it on people.
 
 Development Guide:  
 ========

@@ -11,6 +11,10 @@ It would be incredibly difficult to install or get away with using this for mali
 in the real world. It makes no attempts to shield communications or evade filesystem detection in any way because the
 mesh-networking hosts are not adversarial and do not have any of the protection measures like SIP or Gatekeeper.
 
+**Book: ["Violent Python"](http://books.google.com/books/about/Violent_Python.html?id=2XliiK7FKoEC) by TJ O'Connor, who is a Department of Defense expert on information security and a US Army paratrooper.**  
+**Modules: [Violent-Python-Examples](https://github.com/shadow-box/Violent-Python-Examples)**
+
+
 ## Developer Install:
 ```bash
 git clone https://github.com/pirate/python-medusa.git
@@ -43,9 +47,6 @@ sudo kill `ps -ax|grep -v grep|grep bot.py|head -1|awk '{print $1}'`
 After reading a [book](http://books.google.com/books/about/Violent_Python.html?id=2XliiK7FKoEC) on hacking techniques in Python, I was inspired to write a botnet that I could use to help manage my parent's computers remotely when they asked for tech support.  I followed along while reading the book and implemented some of the more fun modules (such as [scanning Skype message logs](https://github.com/pirate/python-medusa/blob/master/modules/skype.py) and network traffic for [credit card numbers](https://github.com/pirate/python-medusa/blob/master/modules/cardcheck.py)), and so I decided to open source it and use it as a project, (and no... of course it's not running on my parents computers, nice try).  I only run this on VMs for my mesh-networking project, and it's highly inneffective in the real world, there are plenty of better open source botnets out there.  That being said, it is open source, and I am not responsible for anyone who has copied the (already freely available in the book) exploit code and used it for evil purposes.
 
 For my [mesh-networking](https://github.com/pirate/mesh-networking) project, this botnet communicates over all network interfaces in a test subnet, forming its own internally routed network by finding the minimum spanning trees between infected nodes.  I can then visualize its growth and use the botnet code to run arbitrary programs for testing on all the network simulated nodes.
-
-**Book: ["Violent Python"](http://books.google.com/books/about/Violent_Python.html?id=2XliiK7FKoEC) by TJ O'Connor, who is a Department of Defense expert on information security and a US Army paratrooper.**
-**Modules: [Violent-Python-Examples](https://github.com/shadow-box/Violent-Python-Examples)**
 
 Screenshots:  
 ========

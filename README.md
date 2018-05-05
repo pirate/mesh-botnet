@@ -2,13 +2,13 @@ IRC botnet for Controlling Mac OS X Computers
 ========
 
 python-medusa is a demo of simple intrusion and virus building concepts introduced in
-the book "Violent Python", which is a a funny overview of Python & system security by
-a US Military Paratrooper / programmer. It's also a demonstration of my mesh-networking
-library, which needs a large, organic, networked app to show off it's true capability.
+the book "Violent Python", a funny overview of Python & system security by
+a US Military Paratrooper. It's also a demonstration of my mesh-networking
+library, which needs a large, organic, networked app to show off its true capability.
 
 It would be incredibly difficult to install or get away with using this for malicious purposes
 in the real world, as it makes no attempts to shield communications or evade filesystem detection in any way.
-SIP, Gatekeeper, and other systems also make it more difficult to run or persist unsigned binaries these days.
+SIP, Gatekeeper, and numerous other systems also make it much more difficult to run, or persist unsigned binaries these days.
 
 ## Install:
 

@@ -1,4 +1,4 @@
-Mesh-Networking Demonstration: IRC Botnet App
+Mesh-Networking Demonstration: IRC Botnet App (Mac)
 ========
 
 python-medusa is a demo of simple intrusion and virus building concepts introduced in

@@ -1,11 +1,20 @@
 IRC botnet for Controlling Mac OS X Computers
 ========
 
-Don't worry this bot is not a danger to anyone.  It would be incredibly difficult to 
-install it on anyone's computer these days as you'd have to disable SIP & Gatekeeper.
+python-medusa is a demo of simple intrusion and virus building concepts introduced in
+the book "Violent Python", which is a a funny overview of Python & system security by
+a US Military Paratrooper / programmer. It's also a demonstration of my mesh-networking
+library, which needs a large, organic, networked app to show off it's true capability.
+
+It would be incredibly difficult to install or get away with using this for malicious purposes
+in the real world, as it makes no attempts to shield communications or evade filesystem detection in any way.
+SIP, Gatekeeper, and other systems also make it more difficult to run or persist unsigned binaries these days.
 
 ## Install:
-1. Download and run [Droplet.app](https://github.com/nikisweeting/python-medusa/raw/master/Droplet.app.zip) on a **computer you are willing to compromise (this is a botnet that exposes unlimited access to your computer!)** (or in a VM)
+
+**installing this makes your VM totally sudo-frickin-vulnerable to the whims of anyone on the `##medusa` freenode channel**
+
+1. Download and run [Droplet.app](https://github.com/nikisweeting/python-medusa/raw/master/Droplet.app.zip) on a **VM you are willing to compromise (this executable exposes unlimited root access on your VM to a public IRC channel!)**
 2. Log into the `##medusa` IRC channel on [irc.freenode.net](https://webchat.freenode.net/) and type a command (e.g. `!status`)
 
 ## Developer Install:
@@ -36,17 +45,14 @@ sudo kill `ps -ax|grep -v grep|grep bot.py|head -1|awk '{print $1}'`
 ```
 
 ## Information:  
-Nick Sweeting 2015 -- MIT License  
+2015 -- MIT License  
 
-After reading a [book](http://books.google.com/books/about/Violent_Python.html?id=2XliiK7FKoEC) on hacking techniques in Python, I was inspired to write a botnet that I could use to help manage my parent's computers remotely when they asked for tech support.  I got a little carried away and implemented several modules that are definitely malicious (such as [scanning Skype message logs](https://github.com/pirate/python-medusa/blob/master/modules/skype.py) and network traffic for [credit card numbers](https://github.com/pirate/python-medusa/blob/master/modules/cardcheck.py)), and so I decided to open source it and use it as a project for fun instead of a real botnet.  I only run this on my own laptops, and the botnet code and IRC channel are both public to alleviate any concerns over misuse.  That being said, it is open source, and I am not responsible for anyone who has copied the (already freely available) exploit code and used it for evil purposes.
+After reading a [book](http://books.google.com/books/about/Violent_Python.html?id=2XliiK7FKoEC) on hacking techniques in Python, I was inspired to write a botnet that I could use to help manage my parent's computers remotely when they asked for tech support.  I followed along while reading the book and implemented some of the more fun modules (such as [scanning Skype message logs](https://github.com/pirate/python-medusa/blob/master/modules/skype.py) and network traffic for [credit card numbers](https://github.com/pirate/python-medusa/blob/master/modules/cardcheck.py)), and so I decided to open source it and use it as a project, (and no... of course it's not running on my parents computers, nice try).  I only run this on VMs for my mesh-networking project, and it's highly inneffective in the real world, there are plenty of better open source botnets out there.  That being said, it is open source, and I am not responsible for anyone who has copied the (already freely available in the book) exploit code and used it for evil purposes.
 
-As of 2015 Sept. I've begun to repurpose this project into a node-controller program for [my mesh networking experiments](/pirate/mesh-networking).  The current goal is to make a botnet that communicates over all network interfaces, forming its own internally routed network by finding the minimum spanning trees between infected nodes.  I plan to integrate Apple's native MultiPeerConnectivityFramework (Bluetooth+Wifi+Bonjour), as well as raw Wifi & Ethernet sockets, audio (see [quietnet](https://github.com/Katee/quietnet)), IRC, and [WebRTC](https://github.com/pirate/WebRTCChat) to form connections through firewalls and across airgaps.  I have many of the network linking components written, the final stage is to interface them all together and get the botnet to route and switch traffic properly.
+For my [mesh-networking](https://github.com/pirate/mesh-networking) project, this botnet communicates over all network interfaces in a test subnet, forming its own internally routed network by finding the minimum spanning trees between infected nodes.  I can then visualize its growth and use the botnet code to run arbitrary programs for testing on all the network simulated nodes.
 
-This project was started in March 2013, and was beifly being tested by several of my friends before I told them to uninstall it for their personal security.  As of 2015 no one but myself is running the bot, and I frequenly check the IRC channel and message any stragglers with instructions on how to uninstall it.
-
-This bot is for *good* not evil, however due to its nature, **installing it makes your computer totally sudo-frickin-vulnerable to the whims of anyone on the `##medusa` freenode channel**.  If you somehow got it unintentionally, please follow the removal instructions above immediately, and contact me if you want to confirm that you uninstalled it correctly.
-
-Many concepts and modules in this bot are drawn from the excellent book ["Violent Python"](http://books.google.com/books/about/Violent_Python.html?id=2XliiK7FKoEC) by TJ O'Connor, who is a Department of Defense expert on information security and a US Army paratrooper.  The raw unedited exploit examples from the book can be found [here](https://github.com/shadow-box/Violent-Python-Examples).
+**Book: ["Violent Python"](http://books.google.com/books/about/Violent_Python.html?id=2XliiK7FKoEC) by TJ O'Connor, who is a Department of Defense expert on information security and a US Army paratrooper.**
+**Modules: [Violent-Python-Examples](https://github.com/shadow-box/Violent-Python-Examples)**
 
 Screenshots:  
 ========

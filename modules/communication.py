@@ -3,7 +3,7 @@
 from logging import log
 import os
 
-def email(to="nikisweeting+bot@gmail.com",subj='BOT',msg="Info",attch=[]): # function to send mail to a specified address with the given attachments
+def email(to="demo@example.com",subj='BOT',msg="Info",attch=[]): # function to send mail to a specified address with the given attachments
     # do not use attch.append() witin function http://stackoverflow.com/a/113198/2156113
     err = """\n
         sudo mkdir -p /Library/Server/Mail/Data/spool\n

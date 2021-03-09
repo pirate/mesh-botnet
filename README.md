@@ -11,7 +11,7 @@ It would be incredibly difficult to install or get away with using this for mali
 in the real world. It makes no attempts to shield communications or evade filesystem detection in any way because the
 mesh-networking hosts are not adversarial and do not have any of the protection measures like SIP or Gatekeeper.
 
-This is not a "real"/malicious botnet that you can use off-the-shelf, it's just an educational example of of a botnet-style program that can run on [`mesh-networking`](https://github.com/pirate/mesh-networking).
+This is not a "real"/malicious botnet that you can use off-the-shelf, it's just an educational example of of a botnet-style program that can run on the [`mesh-networking`](https://github.com/pirate/mesh-networking) network simulation library.
 
 **Book: ["Violent Python"](http://books.google.com/books/about/Violent_Python.html?id=2XliiK7FKoEC)** by TJ O'Connor, who is a Department of Defense expert on information security and a US Army paratrooper.  
 **Modules: [Violent-Python-Examples](https://github.com/shadow-box/Violent-Python-Examples)**

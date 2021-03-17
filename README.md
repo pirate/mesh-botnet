@@ -1,8 +1,17 @@
 Mesh-Networking Demonstration: IRC Botnet App (Mac)
 ========
 
-python-medusa is a demo of simple intrusion and virus building concepts introduced in
-the book "Violent Python", to be run on the test bed provided by mesh-networking.
+This is an educational demo project used to teach security concepts to programming beginners:
+
+- what are trojans and how are they built
+- what are worms and how are they built
+- what makes a botnet & networked viruses in general
+- command and control via IRC
+- modular exploit design
+- safe self-updating
+
+This repo demonstrates simple intrusion and virus building concepts introduced in
+the book "Violent Python", to be run on the test bed provided by [`mesh-networking`](https://github.com/pirate/mesh-networking).
 The book is a a funny overview of Python & system security by
 a US Military Paratrooper, and I highly recommend checking it out. This is an ideal demonstration
 of the mesh-networking project because it needs a large, organic, networked app to show off its true capability.
